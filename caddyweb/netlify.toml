@@ -1,0 +1,12 @@
+[build]
+  publish = "."
+  functions = "netlify-functions"
+
+# Note: Netlify Python functions are supported on newer runtimes. If your
+# account doesn't expose the Python runtime, use Vercel instead (vercel.json
+# in this repo) — same code, zero config.
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/search"
+  status = 200

@@ -1,0 +1,89 @@
+# GitHub Actions workflow: CADDY cloud job tracker (optional)
+#
+# This runs the free LinkedIn job search in the CLOUD on a schedule, so jobs
+# get collected 24/7 — even when your laptop is closed. It commits new jobs
+# into jobs_results.json, and CADDY reads that file when you type
+# "latest jobs".
+#
+# To enable:
+#   1. Push this repo to GitHub (git push origin main).
+#   2. In repo Settings > Actions > General, allow "Read and write" workflow
+#      permissions (or add a PAT as the JOBTRACKER_PAT secret).
+#   3. The workflow below runs every 6 hours by default; edit the cron to taste.
+#
+# Note: GitHub-hosted runners are in cloud data centers, so LinkedIn may
+# occasionally block requests from them (rate limiting). The local cron
+# version (setup_background_tracker.sh) is more reliable for daily use;
+# use this as an extra safety net.
+
+name: CADDY Job Tracker
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # every 6 hours — adjust as desired
+  workflow_dispatch:        # allow manual runs from the Actions tab
+    inputs:
+      keywords:
+        description: "Job keywords to add before checking (optional)"
+        required: false
+        default: ""
+      location:
+        description: "Location filter (optional)"
+        required: false
+        default: ""
+
+jobs:
+  track-jobs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install requests colorama beautifulsoup4 lxml
+
+      - name: Run job search
+        env:
+          KEYWORDS: ${{ inputs.keywords }}
+          LOCATION: ${{ inputs.location }}
+        run: |
+          python - <<'EOF'
+import os
+import jobs_store
+from linkedin_rss_tracker import LinkedInRSSTracker
+
+tracker = LinkedInRSSTracker()
+
+# Optional: seed a query from workflow_dispatch inputs
+kw = os.environ.get("KEYWORDS", "").strip()
+loc = os.environ.get("LOCATION", "").strip()
+if kw:
+    tracker.add_search_query(kw, loc)
+
+# Ensure at least one search exists so we never check an empty list
+if not tracker.search_queries:
+    print("Seeding default search: Python Developer / Remote")
+    tracker.add_search_query("Python Developer", "Remote")
+
+new_jobs = tracker.check_for_new_jobs()
+added = jobs_store.store_new_jobs(new_jobs)
+print(f"new jobs this run: {added}, total stored: {jobs_store.get_summary()['count']}")
+EOF
+
+      - name: Commit collected jobs
+        run: |
+          git config user.name "CADDY Bot"
+          git config user.email "caddy-bot@users.noreply.github.com"
+          git add jobs_results.json jobs_cache_rss.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "🤖 CADDY: update collected jobs $(date -u +%Y-%m-%d)"
+            git push "https://x-access-token:${JOBTRACKER_PAT:-${{ secrets.GITHUB_TOKEN }}}@github.com/${GITHUB_REPOSITORY}.git" HEAD:${{ github.ref_name }}
+          else
+            echo "No new jobs to commit."
+          fi

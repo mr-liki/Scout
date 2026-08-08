@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/search.py": {
+      "runtime": "python3.9@1.1.0"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}
