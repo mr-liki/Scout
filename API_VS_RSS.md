@@ -167,7 +167,7 @@ Solution: 1 search × 2 checks/day = 60 requests/month ✅
 export RAPID_API_KEY='your_key_here'
 
 # 2. Run the API version
-python caddy_with_linkedin.py
+python scout_with_linkedin.py
 
 # 3. Add searches
 add job search: Python Developer, Remote, Full-time
@@ -190,7 +190,7 @@ python linkedin_rss_tracker.py
 python linkedin_rss_tracker.py
 
 # Terminal 2: API tracker (strategic)
-python caddy_with_linkedin.py
+python scout_with_linkedin.py
 # Check 2x per day manually
 ```
 
@@ -213,9 +213,9 @@ python caddy_with_linkedin.py
 
 ---
 
-## Which Method Does CADDY Use?
+## Which Method Does SCOUT Use?
 
-**By default**: CADDY uses the **RapidAPI method** because:
+**By default**: SCOUT uses the **RapidAPI method** because:
 1. Better data quality
 2. Official API access
 3. No risk of blocking
@@ -241,8 +241,8 @@ python caddy_with_linkedin.py
 # Use the RSS tracker
 python linkedin_rss_tracker.py
 
-# Or integrate into CADDY
-# Modify caddy_with_linkedin.py to use LinkedInRSSTracker
+# Or integrate into SCOUT
+# Modify scout_with_linkedin.py to use LinkedInRSSTracker
 ```
 
 ---

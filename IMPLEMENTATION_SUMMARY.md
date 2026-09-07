@@ -1,8 +1,8 @@
-# 🎉 CADDY LinkedIn Job Tracker - Implementation Summary
+# 🎉 SCOUT LinkedIn Job Tracker - Implementation Summary
 
 ## What Was Built
 
-Your CADDY AI agent has been successfully enhanced with **real-time LinkedIn job tracking** capabilities that rival LinkedIn Premium features - completely free!
+Your SCOUT AI agent has been successfully enhanced with **real-time LinkedIn job tracking** capabilities that rival LinkedIn Premium features - completely free!
 
 ---
 
@@ -21,8 +21,8 @@ Your CADDY AI agent has been successfully enhanced with **real-time LinkedIn job
    - Unlimited requests
    - **Recommended for your use case**
 
-3. **`caddy_with_linkedin.py`** (200 lines)
-   - Enhanced CADDY with LinkedIn integration
+3. **`scout_with_linkedin.py`** (200 lines)
+   - Enhanced SCOUT with LinkedIn integration
    - Background monitoring in threads
    - Cyberpunk UI with job alerts
    - Interactive commands
@@ -95,7 +95,7 @@ Your CADDY AI agent has been successfully enhanced with **real-time LinkedIn job
 ```
 User Input
     ↓
-CADDY Main Loop (caddy_with_linkedin.py)
+SCOUT Main Loop (scout_with_linkedin.py)
     ↓
 ├─→ AI Chatbot (existing functionality)
 └─→ LinkedIn Job Tracker
@@ -134,8 +134,8 @@ New Jobs? → Alert User!
 # Setup (one time)
 ./setup_linkedin.sh
 
-# Run CADDY with LinkedIn
-python caddy_with_linkedin.py
+# Run SCOUT with LinkedIn
+python scout_with_linkedin.py
 
 # Add a search
 add job search: Python Developer, Remote, Full-time
@@ -205,7 +205,7 @@ tracker.start_monitoring()
 
 ### Comparison to LinkedIn Premium:
 
-| Feature | LinkedIn Premium | Your CADDY |
+| Feature | LinkedIn Premium | Your SCOUT |
 |---------|-----------------|------------|
 | Real-time alerts | ✅ | ✅ |
 | Multiple searches | ✅ | ✅ |
@@ -247,7 +247,7 @@ lxml==4.9.3          # Fast parsing
 ## 📚 Documentation Structure
 
 ```
-Caddy/
+Scout/
 ├── Quick Start
 │   └── QUICK_START.md (5-minute guide)
 ├── Detailed Setup
@@ -276,9 +276,9 @@ Caddy/
    - No API key? Use `linkedin_rss_tracker.py` ⭐
    - Have API key? Use `linkedin_tracker.py`
 
-3. **Start CADDY:**
+3. **Start SCOUT:**
    ```bash
-   python caddy_with_linkedin.py
+   python scout_with_linkedin.py
    ```
 
 4. **Add job searches:**
@@ -339,14 +339,14 @@ This implementation demonstrates:
 
 ## 📈 Success Metrics
 
-### Before CADDY:
+### Before SCOUT:
 - Manual LinkedIn checking
 - Miss job postings
 - Apply late (low response rate)
 - No systematic tracking
 - Pay $30/month for Premium?
 
-### After CADDY:
+### After SCOUT:
 - ✅ Automated 24/7 monitoring
 - ✅ Instant notifications (1-2 min)
 - ✅ Apply immediately (first applicants)
@@ -399,12 +399,12 @@ Need help?
 
 ## 🎉 Congratulations!
 
-Your CADDY AI agent is now a **powerful job hunting tool** that gives you an unfair advantage in the job market!
+Your SCOUT AI agent is now a **powerful job hunting tool** that gives you an unfair advantage in the job market!
 
-**Start hunting:** `python caddy_with_linkedin.py`
+**Start hunting:** `python scout_with_linkedin.py`
 
 Good luck! 🚀💼
 
 ---
 
-**Remember**: The best time to apply is within the first hour of job posting. CADDY gives you that edge! 💪
+**Remember**: The best time to apply is within the first hour of job posting. SCOUT gives you that edge! 💪

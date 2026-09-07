@@ -7,7 +7,7 @@ LinkedIn Premium ($29.99/month) includes:
   2. AI suggestions for headline / about / experience sections
   3. AI-drafted InMail / connection messages
 
-CADDY provides the same functionality for free:
+SCOUT provides the same functionality for free:
 
   - When HF_API_KEY is set (or api-inference.huggingface.co is reachable),
     a real instruct model (Mistral-7B-Instruct) generates the content.

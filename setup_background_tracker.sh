@@ -1,11 +1,11 @@
 #!/bin/bash
 # setup_background_tracker.sh
 #
-# Installs / removes CADDY's background job tracker cron job.
+# Installs / removes SCOUT's background job tracker cron job.
 #
 # NOTE: all the real logic lives in background_tracker.py (single source of
 # truth). This script just calls it, so running the same commands from inside
-# CADDY ("enable background tracker" / "disable background tracker") and from
+# SCOUT ("enable background tracker" / "disable background tracker") and from
 # this script can never drift apart.
 #
 # Usage:
@@ -25,7 +25,7 @@ if [ ! -x "$PYTHON" ]; then
 fi
 
 echo "=============================================="
-echo "🤖 CADDY Background Job Tracker"
+echo "🤖 SCOUT Background Job Tracker"
 echo "=============================================="
 
 if [ ! -x "$PYTHON" ]; then
@@ -63,10 +63,10 @@ fi
 echo "✓ Installed! The tracker now runs automatically every $INTERVAL_MIN minutes."
 echo ""
 echo "Next steps:"
-echo "  1. Add job searches in CADDY first:  python main.py"
+echo "  1. Add job searches in SCOUT first:  python main.py"
 echo "     (e.g. 'add job search: Python Developer, Remote')"
 echo "  2. The tracker will start picking up your searches on the next run."
-echo "  3. Inside CADDY, type 'latest jobs' to see what was collected."
+echo "  3. Inside SCOUT, type 'latest jobs' to see what was collected."
 echo ""
 echo "📄 Logs: tail -f $PROJECT_DIR/background_tracker.log"
 echo "🔧 Uninstall later: ./setup_background_tracker.sh remove"

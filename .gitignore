@@ -1,0 +1,13 @@
+venv/
+venv_win/
+__pycache__/
+*.pyc
+.claude/
+.freebuff/
+
+# runtime cache / scratch output
+linkedin_*.json
+linkedin_*.json.partial
+linkedin_*.json.partial.json
+linkedin_*.html
+linkedin_connector.py

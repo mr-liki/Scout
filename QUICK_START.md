@@ -47,7 +47,7 @@ RAPID_API_KEY=your_actual_key_here
 set -a; source .env; set +a
 ```
 
-### Step 4: Start CADDY with LinkedIn
+### Step 4: Start SCOUT with LinkedIn
 
 **`main.py` is the only file you need to run.**
 
@@ -55,16 +55,16 @@ set -a; source .env; set +a
 python main.py
 ```
 
-> 💡 No API key required — CADDY uses the free LinkedIn public search automatically.
+> 💡 No API key required — SCOUT uses the free LinkedIn public search automatically.
 
 ### Step 5: Add Your First Job Search
 
-Once CADDY starts, type:
+Once SCOUT starts, type:
 ```
 add job search: Python Developer, Remote, Full-time
 ```
 
-### Step 6: Start Monitoring (and keep it running even when you close CADDY)
+### Step 6: Start Monitoring (and keep it running even when you close SCOUT)
 
 ```
 enable background tracker
@@ -72,7 +72,7 @@ enable background tracker
 
 This installs an automatic cron job that checks LinkedIn every 30 minutes **even while you're not running the bot**. When you come back, type `latest jobs` to see everything collected.
 
-**That's it!** 🎉 You'll get alerts whenever new jobs are posted — even while CADDY is closed!
+**That's it!** 🎉 You'll get alerts whenever new jobs are posted — even while SCOUT is closed!
 
 ---
 
@@ -137,7 +137,7 @@ Most jobs are posted:
 - 9 AM - 5 PM (company local time)
 - Especially Tuesday-Wednesday mornings
 
-### 5. Keep CADDY Running 24/7
+### 5. Keep SCOUT Running 24/7
 
 **Using tmux (Recommended)**:
 ```bash
@@ -145,40 +145,40 @@ Most jobs are posted:
 brew install tmux  # macOS
 
 # Start a session
-tmux new -s caddy
+tmux new -s scout
 
-# Run CADDY
+# Run SCOUT
 python main.py
 
-# Detach (CADDY keeps running)
+# Detach (SCOUT keeps running)
 # Press: Ctrl+B, then D
 
 # Reattach later
-tmux attach -t caddy
+tmux attach -t scout
 ```
 
 **Using screen**:
 ```bash
 # Start a session
-screen -S caddy
+screen -S scout
 
-# Run CADDY
+# Run SCOUT
 python main.py
 
-# Detach (CADDY keeps running)
+# Detach (SCOUT keeps running)
 # Press: Ctrl+A, then D
 
 # Reattach later
-screen -r caddy
+screen -r scout
 ```
 
 **Using nohup**:
 ```bash
 # Run in background
-nohup python main.py > caddy.log 2>&1 &
+nohup python main.py > scout.log 2>&1 &
 
 # Check the log
-tail -f caddy.log
+tail -f scout.log
 
 # Stop it
 pkill -f main.py
@@ -218,7 +218,7 @@ Visit: https://rapidapi.com/developer/billing
 # Clear the cache to start fresh
 rm jobs_cache.json
 
-# Restart CADDY
+# Restart SCOUT
 python main.py
 ```
 
@@ -229,7 +229,7 @@ python main.py
 To maximize your 50 free requests/month:
 
 ### Strategy 1: Smart Scheduling
-Run CADDY only during peak hours:
+Run SCOUT only during peak hours:
 ```bash
 # Monday-Friday, 9 AM - 5 PM
 # 8 hours × 5 days = 40 hours/week
@@ -265,7 +265,7 @@ Run CADDY only during peak hours:
 crontab -e
 
 # Add this line to check twice daily (10 AM and 2 PM)
-0 10,14 * * 1-5 cd /Users/likhithr/Caddy && /Users/likhithr/Caddy/venv/bin/python linkedin_tracker.py
+0 10,14 * * 1-5 cd /Users/likhithr/Scout && /Users/likhithr/Scout/venv/bin/python linkedin_tracker.py
 
 # Save and exit
 ```

@@ -2,9 +2,9 @@
 """
 jobs_store.py - Shared persistent store for found jobs.
 
-Both the background tracker (background_tracker.py) and the CADDY chatbot
-(main.py / caddy_with_linkedin.py) read and write this file so jobs found
-while CADDY is closed are still available when you open it again.
+Both the background tracker (background_tracker.py) and the SCOUT chatbot
+(main.py / scout_with_linkedin.py) read and write this file so jobs found
+while SCOUT is closed are still available when you open it again.
 
 Data is stored in jobs_results.json:
 {

@@ -180,7 +180,7 @@ def main():
     
     print(Fore.CYAN + "\n" + "=" * 50)
     print(Fore.GREEN + "Example completed!")
-    print(Fore.WHITE + "For full CADDY experience, run: python caddy_with_linkedin.py")
+    print(Fore.WHITE + "For full SCOUT experience, run: python scout_with_linkedin.py")
     print(Fore.CYAN + "=" * 50 + "\n")
 
 

@@ -123,36 +123,36 @@ def test_rss_tracker():
         return False
 
 
-def test_caddy_integration():
-    """Test CADDY with LinkedIn integration"""
-    print_header("TEST 4: CADDY Integration (caddy_with_linkedin.py)")
+def test_scout_integration():
+    """Test SCOUT with LinkedIn integration"""
+    print_header("TEST 4: SCOUT Integration (scout_with_linkedin.py)")
     
     try:
-        from caddy_with_linkedin import CaddyWithLinkedIn
-        print(Fore.GREEN + "✓ caddy_with_linkedin.py imports successfully")
+        from scout_with_linkedin import ScoutWithLinkedIn
+        print(Fore.GREEN + "✓ scout_with_linkedin.py imports successfully")
         
         # Create instance
-        caddy = CaddyWithLinkedIn()
-        print(Fore.GREEN + "✓ CaddyWithLinkedIn instance created")
+        scout = ScoutWithLinkedIn()
+        print(Fore.GREEN + "✓ ScoutWithLinkedIn instance created")
         
         # Test job tracker is accessible
-        if hasattr(caddy, 'job_tracker'):
-            print(Fore.GREEN + "✓ Job tracker integrated into CADDY")
+        if hasattr(scout, 'job_tracker'):
+            print(Fore.GREEN + "✓ Job tracker integrated into SCOUT")
         
         # Test chat function exists
-        if hasattr(caddy, 'chat'):
+        if hasattr(scout, 'chat'):
             print(Fore.GREEN + "✓ Chat function available")
         
         # Test monitoring functions
-        if hasattr(caddy, 'start_job_monitoring'):
+        if hasattr(scout, 'start_job_monitoring'):
             print(Fore.GREEN + "✓ Job monitoring functions available")
         
-        print(Fore.GREEN + Style.BRIGHT + "\n✅ CADDY Integration is functional!")
+        print(Fore.GREEN + Style.BRIGHT + "\n✅ SCOUT Integration is functional!")
         return True
         
     except Exception as e:
         print(Fore.RED + f"✗ Error: {e}")
-        print(Fore.RED + Style.BRIGHT + "\n❌ CADDY Integration test failed!")
+        print(Fore.RED + Style.BRIGHT + "\n❌ SCOUT Integration test failed!")
         return False
 
 
@@ -191,10 +191,10 @@ def print_summary(results):
     
     if passed == total:
         print(Fore.GREEN + Style.BRIGHT + "\n🎉 ALL TESTS PASSED! 🎉")
-        print(Fore.WHITE + "\nYour CADDY LinkedIn tracker is ready to use!")
+        print(Fore.WHITE + "\nYour SCOUT LinkedIn tracker is ready to use!")
         print(Fore.YELLOW + "\nNext steps:")
         print(Fore.WHITE + "1. Set RAPID_API_KEY (optional for API method)")
-        print(Fore.WHITE + "2. Run: python caddy_with_linkedin.py")
+        print(Fore.WHITE + "2. Run: python scout_with_linkedin.py")
         print(Fore.WHITE + "3. Or: python linkedin_rss_tracker.py (no API key needed)")
     else:
         print(Fore.RED + Style.BRIGHT + "\n⚠ SOME TESTS FAILED")
@@ -208,7 +208,7 @@ def main():
     """Run all tests"""
     print(Fore.CYAN + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║  CADDY LinkedIn Job Tracker - Test Suite           ║
+    ║  SCOUT LinkedIn Job Tracker - Test Suite           ║
     ╚══════════════════════════════════════════════════════╝
     """)
     
@@ -219,7 +219,7 @@ def main():
         "Dependencies": test_imports(),
         "API Tracker": test_linkedin_tracker(),
         "RSS Tracker": test_rss_tracker(),
-        "CADDY Integration": test_caddy_integration(),
+        "SCOUT Integration": test_scout_integration(),
         "Example Script": test_example_script(),
     }
     

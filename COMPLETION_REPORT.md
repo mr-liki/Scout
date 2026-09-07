@@ -4,7 +4,7 @@
 
 **Date**: August 6, 2026  
 **User**: Likhith R  
-**Task**: Improve CADDY AI agent to track LinkedIn Premium features for live job updates within 1-2 minutes
+**Task**: Improve SCOUT AI agent to track LinkedIn Premium features for live job updates within 1-2 minutes
 
 ---
 
@@ -35,8 +35,8 @@
    - 100% FREE, unlimited
    - No API key required ⭐
 
-3. **caddy_with_linkedin.py** (200 lines)
-   - Enhanced CADDY with LinkedIn
+3. **scout_with_linkedin.py** (200 lines)
+   - Enhanced SCOUT with LinkedIn
    - Background threading
    - Interactive commands
 
@@ -116,7 +116,7 @@ tracker.add_search_query("ML Engineer", "United States")
 
 ### LinkedIn Premium Comparison:
 
-| Feature | LinkedIn Premium | Your CADDY |
+| Feature | LinkedIn Premium | Your SCOUT |
 |---------|-----------------|------------|
 | Monthly cost | $29.99 | $0 |
 | Annual cost | $359.88 | $0 |
@@ -150,7 +150,7 @@ tracker.add_search_query("ML Engineer", "United States")
 
 ### Architecture:
 ```
-CADDY Main Loop
+SCOUT Main Loop
     ↓
 ├─→ AI Chatbot (existing)
 └─→ LinkedIn Job Tracker
@@ -203,7 +203,7 @@ New Jobs? → Alert!
 ✅ PASSED - Dependencies installed
 ✅ PASSED - API Tracker functional
 ✅ PASSED - RSS Tracker functional
-✅ PASSED - CADDY Integration working
+✅ PASSED - SCOUT Integration working
 ✅ PASSED - Example scripts ready
 
 Results: 5/5 tests passed
@@ -255,7 +255,7 @@ Results: 5/5 tests passed
 
 ### Immediate Actions:
 1. ✅ Run setup: `./setup_linkedin.sh`
-2. ✅ Start CADDY: `python3 caddy_with_linkedin.py`
+2. ✅ Start SCOUT: `python3 scout_with_linkedin.py`
 3. ✅ Add searches: `add job search: Python Developer, Remote`
 4. ✅ Start monitoring: `start monitoring`
 5. ✅ Get alerts within 1-2 minutes! 🎉
@@ -346,7 +346,7 @@ pip install --upgrade -r requirements.txt
 rm jobs_cache*.json
 
 # Restart monitoring
-python3 caddy_with_linkedin.py
+python3 scout_with_linkedin.py
 ```
 
 ---
@@ -405,9 +405,9 @@ python3 caddy_with_linkedin.py
 
 ## 📝 Quick Reference
 
-### Start CADDY:
+### Start SCOUT:
 ```bash
-python3 caddy_with_linkedin.py
+python3 scout_with_linkedin.py
 ```
 
 ### Add Search:

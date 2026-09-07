@@ -1,7 +1,7 @@
-# 🚀 CADDY LinkedIn Job Tracker Setup Guide
+# 🚀 SCOUT LinkedIn Job Tracker Setup Guide
 
 ## Overview
-CADDY now includes **real-time LinkedIn job tracking** that monitors job postings and alerts you within 1-2 minutes of new listings!
+SCOUT now includes **real-time LinkedIn job tracking** that monitors job postings and alerts you within 1-2 minutes of new listings!
 
 ## ✨ Features
 
@@ -17,7 +17,7 @@ CADDY now includes **real-time LinkedIn job tracking** that monitors job posting
 ### How It Works
 1. Add job searches with keywords and filters
 2. Start monitoring in the background
-3. CADDY checks LinkedIn every 60 seconds
+3. SCOUT checks LinkedIn every 60 seconds
 4. New jobs trigger instant terminal notifications
 5. All jobs are cached to avoid duplicates
 
@@ -79,10 +79,10 @@ HF_API_KEY=your_huggingface_key_here  # Optional, for better AI chat
 
 ## 🎮 Usage Guide
 
-### Starting CADDY with LinkedIn Tracking
+### Starting SCOUT with LinkedIn Tracking
 
 ```bash
-python caddy_with_linkedin.py
+python scout_with_linkedin.py
 ```
 
 ### Basic Commands
@@ -113,7 +113,7 @@ start monitoring
 start tracking
 ```
 
-CADDY will now check for new jobs every 60 seconds and alert you instantly!
+SCOUT will now check for new jobs every 60 seconds and alert you instantly!
 
 #### 4. Stop Monitoring
 ```
@@ -135,7 +135,7 @@ clear job cache
 ## 📱 Example Session
 
 ```bash
-$ python caddy_with_linkedin.py
+$ python scout_with_linkedin.py
 
     ██████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗
    ██╔════╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝
@@ -152,14 +152,14 @@ $ python caddy_with_linkedin.py
 ┌─[YOU]
 └──> add job search: Python Developer, Remote, Full-time
 
-┌─[CADDY]
+┌─[SCOUT]
 └──> ✅ Added job search: 'Python Developer' in 'Remote'
      Start monitoring with: 'start monitoring'
 
 ┌─[YOU]
 └──> start monitoring
 
-┌─[CADDY]
+┌─[SCOUT]
 └──> LinkedIn job monitoring started! Checking every 60 seconds.
 
 [2026-08-06 14:30:00] Check #1 - Scanning for new jobs...
@@ -184,7 +184,7 @@ $ python caddy_with_linkedin.py
 
 ### Adjust Check Interval
 
-In `caddy_with_linkedin.py`, modify:
+In `scout_with_linkedin.py`, modify:
 ```python
 # Check every 60 seconds (1 minute)
 self.start_job_monitoring(interval=60)
@@ -231,20 +231,20 @@ self.start_job_monitoring(interval=300)
 - Combine similar searches to save API calls
 
 ### 3. Run in Background
-Keep CADDY running 24/7:
+Keep SCOUT running 24/7:
 
 ```bash
 # Using tmux (recommended)
-tmux new -s caddy
-python caddy_with_linkedin.py
+tmux new -s scout
+python scout_with_linkedin.py
 # Press Ctrl+B then D to detach
 
 # Using nohup
-nohup python caddy_with_linkedin.py > caddy.log 2>&1 &
+nohup python scout_with_linkedin.py > scout.log 2>&1 &
 
 # Using screen
-screen -S caddy
-python caddy_with_linkedin.py
+screen -S scout
+python scout_with_linkedin.py
 # Press Ctrl+A then D to detach
 ```
 
@@ -290,7 +290,7 @@ rm jobs_cache.json
 ### Issue: Too many API calls
 **Solution**: Increase check interval
 ```python
-# In caddy_with_linkedin.py
+# In scout_with_linkedin.py
 self.start_job_monitoring(interval=300)  # 5 minutes
 ```
 
@@ -356,4 +356,4 @@ If you encounter issues:
 
 **Happy Job Hunting! 🎉**
 
-Made with 💚 by CADDY - Your Cyberpunk Career Assistant
+Made with 💚 by SCOUT - Your Cyberpunk Career Assistant

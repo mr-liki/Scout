@@ -1,8 +1,8 @@
-# GitHub Actions workflow: CADDY cloud job tracker (optional)
+# GitHub Actions workflow: SCOUT cloud job tracker (optional)
 #
 # This runs the free LinkedIn job search in the CLOUD on a schedule, so jobs
 # get collected 24/7 — even when your laptop is closed. It commits new jobs
-# into jobs_results.json, and CADDY reads that file when you type
+# into jobs_results.json, and SCOUT reads that file when you type
 # "latest jobs".
 #
 # To enable:
@@ -16,7 +16,7 @@
 # version (setup_background_tracker.sh) is more reliable for daily use;
 # use this as an extra safety net.
 
-name: CADDY Job Tracker
+name: SCOUT Job Tracker
 
 on:
   schedule:
@@ -78,11 +78,11 @@ EOF
 
       - name: Commit collected jobs
         run: |
-          git config user.name "CADDY Bot"
-          git config user.email "caddy-bot@users.noreply.github.com"
+          git config user.name "SCOUT Bot"
+          git config user.email "scout-bot@users.noreply.github.com"
           git add jobs_results.json jobs_cache_rss.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
-            git commit -m "🤖 CADDY: update collected jobs $(date -u +%Y-%m-%d)"
+            git commit -m "🤖 SCOUT: update collected jobs $(date -u +%Y-%m-%d)"
             git push "https://x-access-token:${JOBTRACKER_PAT:-${{ secrets.GITHUB_TOKEN }}}@github.com/${GITHUB_REPOSITORY}.git" HEAD:${{ github.ref_name }}
           else
             echo "No new jobs to commit."

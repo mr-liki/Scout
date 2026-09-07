@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-background_tracker.py - Headless LinkedIn job tracker for CADDY.
+background_tracker.py - Headless LinkedIn job tracker for SCOUT.
 
 Runs WITHOUT the chatbot, so job tracking continues even while you're not
-using CADDY. Schedule it with cron / launchd (see setup_background_tracker.sh)
+using SCOUT. Schedule it with cron / launchd (see setup_background_tracker.sh)
 or run it manually:
 
     python background_tracker.py                  # check once, then exit
@@ -12,14 +12,14 @@ or run it manually:
 
 How it works:
   - Reads your saved search queries from jobs_cache.json and jobs_cache_rss.json
-    (whatever you added inside CADDY with "add job search" or "list X jobs").
+    (whatever you added inside SCOUT with "add job search" or "list X jobs").
   - Uses the FREE LinkedIn public search (no API key needed).
-  - Newly found jobs are stored in jobs_results.json, which CADDY reads when
+  - Newly found jobs are stored in jobs_results.json, which SCOUT reads when
     you type "latest jobs".
   - Logs each run to background_tracker.log.
 
 Works best when scheduled. Example cron line (every 30 minutes):
-    */30 * * * * cd /path/to/Caddy && ./venv/bin/python background_tracker.py --once --notify >> background_tracker.log 2>&1
+    */30 * * * * cd /path/to/Scout && ./venv/bin/python background_tracker.py --once --notify >> background_tracker.log 2>&1
 """
 
 import argparse
@@ -39,7 +39,7 @@ import jobs_store
 
 # Marker used to find/remove our cron entry (single source of truth — the
 # shell script delegates to this module so the tag can never drift).
-CRON_TAG = "caddy-background-tracker"
+CRON_TAG = "scout-background-tracker"
 
 
 def log(message):
@@ -82,7 +82,7 @@ def check_once(notify=False):
     """Run one full check across all saved queries. Returns # of new jobs."""
     queries = load_saved_queries()
     if not queries:
-        log("No saved job searches found. Add one inside CADDY first, e.g. 'add job search: Python Developer, Remote'")
+        log("No saved job searches found. Add one inside SCOUT first, e.g. 'add job search: Python Developer, Remote'")
         return 0
 
     tracker = LinkedInRSSTracker()
@@ -141,7 +141,7 @@ def check_once(notify=False):
 def _notify_macos(count):
     """Fire a macOS notification banner (best-effort)."""
     try:
-        script = f'display notification "Found {count} new job(s)" with title "CADDY Job Tracker"'
+        script = f'display notification "Found {count} new job(s)" with title "SCOUT Job Tracker"'
         os.system(f'osascript -e \'{script}\'')
     except Exception:
         pass
@@ -224,7 +224,7 @@ def get_log_tail(n=5):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Headless CADDY LinkedIn job tracker")
+    parser = argparse.ArgumentParser(description="Headless SCOUT LinkedIn job tracker")
     parser.add_argument("--once", action="store_true", help="Run a single check and exit (good for cron)")
     parser.add_argument("--interval", type=int, default=0,
                         help="Loop forever, checking every N seconds (e.g. 1800 = 30 min)")

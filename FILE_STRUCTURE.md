@@ -1,15 +1,15 @@
-# 📁 CADDY File Structure
+# 📁 SCOUT File Structure
 
 ## Overview
 
 ```
-Caddy/
+Scout/
 ├── 🎯 START HERE FIRST
 │   └── START_HERE.md                    ← Read this first!
 │
 ├── 🚀 MAIN PROGRAMS
-│   ├── main.py                         ← ⭐ THE ONLY FILE YOU RUN - full CADDY + LinkedIn + background tracker
-│   ├── caddy_with_linkedin.py          ← Older duplicate entry point (not needed - use main.py)
+│   ├── main.py                         ← ⭐ THE ONLY FILE YOU RUN - full SCOUT + LinkedIn + background tracker
+│   ├── scout_with_linkedin.py          ← Older duplicate entry point (not needed - use main.py)
 │   ├── linkedin_tracker.py             ← API-based tracker (needs key)
 │   ├── linkedin_rss_tracker.py         ← RSS tracker (no key!) ⭐
 │   ├── background_tracker.py           ← Headless background tracker (managed from main.py)
@@ -55,8 +55,8 @@ Caddy/
 
 | File | Purpose | API Key? | Cost | Best For |
 |------|---------|----------|------|----------|
-| **main.py** | Full CADDY + LinkedIn + background tracker | Optional | Free | Everything ⭐ |
-| **caddy_with_linkedin.py** | Older duplicate entry point | Optional | Free | Legacy - use main.py |
+| **main.py** | Full SCOUT + LinkedIn + background tracker | Optional | Free | Everything ⭐ |
+| **scout_with_linkedin.py** | Older duplicate entry point | Optional | Free | Legacy - use main.py |
 | **linkedin_tracker.py** | API-based tracker | Yes | Free tier | Quality data |
 | **linkedin_rss_tracker.py** | RSS scraping tracker | No | Free | Unlimited use ⭐ |
 | **background_tracker.py** | Headless tracker (cron) | No | Free | Auto-tracking ⭐ |
@@ -130,7 +130,7 @@ Caddy/
 ```bash
 1. python3 main.py
 2. add job search: Your Job, Location
-3. enable background tracker   (track even when CADDY is closed)
+3. enable background tracker   (track even when SCOUT is closed)
 4. latest jobs                (see what was collected)
 ```
 
@@ -145,8 +145,8 @@ Caddy/
 - **Config files**: 2 files
 
 ### By Purpose:
-- **Core functionality**: 3 files (trackers + CADDY)
-- **Original CADDY**: 2 files (main.py, chatbot.py)
+- **Core functionality**: 3 files (trackers + SCOUT)
+- **Original SCOUT**: 2 files (main.py, chatbot.py)
 - **Utilities**: 3 files (setup, test, examples)
 - **Documentation**: 9 files (guides, refs, reports)
 - **Configuration**: 2 files (requirements, env)
@@ -174,7 +174,7 @@ Caddy/
 - test_linkedin.py
 
 ### Large Files (10-15KB):
-- caddy_with_linkedin.py
+- scout_with_linkedin.py
 - main.py
 - LINKEDIN_SETUP.md
 - IMPLEMENTATION_SUMMARY.md
@@ -273,7 +273,7 @@ python3 test_linkedin.py               # Test all
 python3 example_usage.py               # See examples
 
 # Running
-python3 main.py                        # ⭐ Full CADDY (chat + jobs + background tracker)
+python3 main.py                        # ⭐ Full SCOUT (chat + jobs + background tracker)
 python3 background_tracker.py --once   # One-off background check
 python3 linkedin_rss_tracker.py        # RSS only
 

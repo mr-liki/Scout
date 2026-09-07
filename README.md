@@ -1,4 +1,4 @@
-# CADDY - Cyberpunk AI Terminal Assistant
+# SCOUT - Cyberpunk AI Terminal Assistant
 
 A **hacker-style terminal chatbot** with neon effects, ASCII art, and a cyberpunk interface! 🌆⚡
 
@@ -14,7 +14,7 @@ A **hacker-style terminal chatbot** with neon effects, ASCII art, and a cyberpun
 
 ## ✨ Core Features
 
-- 🎨 **Neon Blue ASCII Logo** - Pixel-style "CADDY" title
+- 🎨 **Neon Blue ASCII Logo** - Pixel-style "SCOUT" title
 - 💚 **Matrix-Style Background** - Animated green hacking screen theme
 - ⚡ **Cyberpunk Interface** - Glitch effects and neon colors
 - 🤖 **AI Chatbot** - Powered by Hugging Face API
@@ -25,7 +25,7 @@ A **hacker-style terminal chatbot** with neon effects, ASCII art, and a cyberpun
 
 ## 🚀 Quick Start
 
-### Standard CADDY (Chat Only)
+### Standard SCOUT (Chat Only)
 
 ```bash
 # Create virtual environment
@@ -37,11 +37,11 @@ source venv/bin/activate
 # Install requirements
 pip install -r requirements.txt
 
-# Run CADDY
+# Run SCOUT
 python main.py
 ```
 
-### CADDY with LinkedIn Job Tracking (Recommended — one file only)
+### SCOUT with LinkedIn Job Tracking (Recommended — one file only)
 
 **`main.py` is the only file you ever need to run.** Everything (chat, job search, background tracking) is controlled from inside it.
 
@@ -50,11 +50,11 @@ python main.py
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Run CADDY — that's it!
+# 2. Run SCOUT — that's it!
 python main.py
 ```
 
-> 💡 No API keys required. CADDY uses the free LinkedIn public search out of the box. Optional: set `HF_API_KEY` for smarter AI chat, or add a free [RapidAPI key](https://rapidapi.com/rockapis-rockapis-default/api/linkedin-data-api) for more robust results.
+> 💡 No API keys required. SCOUT uses the free LinkedIn public search out of the box. Optional: set `HF_API_KEY` for smarter AI chat, or add a free [RapidAPI key](https://rapidapi.com/rockapis-rockapis-default/api/linkedin-data-api) for more robust results.
 
 ### 3. (Optional) Set API Key for Better AI Chat
 
@@ -65,7 +65,7 @@ export HF_API_KEY='your_token_here'
 
 ## 🆕 NEW: Four Job Platforms (LinkedIn + Indeed + Glassdoor + Wellfound)
 
-CADDY now searches **LinkedIn, Indeed, Glassdoor AND Wellfound** together — quadruple the coverage, no extra setup:
+SCOUT now searches **LinkedIn, Indeed, Glassdoor AND Wellfound** together — quadruple the coverage, no extra setup:
 
 ```
 > Python Developer                    # returns jobs from all four platforms
@@ -80,11 +80,11 @@ CADDY now searches **LinkedIn, Indeed, Glassdoor AND Wellfound** together — qu
 - 🌍 **Country-aware**: Indian locations route Glassdoor to `glassdoor.co.in` (₹ salaries), and Wellfound returns startup jobs worldwide including India
 - 🆓 No API key needed for any platform
 
-> ⚠️ Notes: (1) Indeed is scoped to the US job index — non-US locations return fewer/zero Indeed results. (2) Glassdoor is fetched through the free r.jina.ai reader proxy (bot-wall bypass), which has rate limits — CADDY caches each search for 15 min, so normal use is well within the free tier. (3) Wellfound is behind Cloudflare, which is flaky — CADDY retries with backoff and caches results, so it degrades gracefully (0 Wellfound) if blocked rather than failing.
+> ⚠️ Notes: (1) Indeed is scoped to the US job index — non-US locations return fewer/zero Indeed results. (2) Glassdoor is fetched through the free r.jina.ai reader proxy (bot-wall bypass), which has rate limits — SCOUT caches each search for 15 min, so normal use is well within the free tier. (3) Wellfound is behind Cloudflare, which is flaky — SCOUT retries with backoff and caches results, so it degrades gracefully (0 Wellfound) if blocked rather than failing.
 
 ## ✨ NEW: Premium AI Features (Free)
 
-LinkedIn Premium adds AI tools for job hunting. CADDY has them **free** — they work even without any AI API key (smart offline engine), and get smarter if you add a free `HF_API_KEY`:
+LinkedIn Premium adds AI tools for job hunting. SCOUT has them **free** — they work even without any AI API key (smart offline engine), and get smarter if you add a free `HF_API_KEY`:
 
 ```
 > ai help                          # see all AI commands
@@ -95,15 +95,15 @@ LinkedIn Premium adds AI tools for job hunting. CADDY has them **free** — they
 > connection message: Sarah, Google, liked your CUDA talk
 ```
 
-- 🎯 **AI job discovery** — type a plain-language career goal, CADDY parses it and returns ranked matching jobs (low-competition first)
+- 🎯 **AI job discovery** — type a plain-language career goal, SCOUT parses it and returns ranked matching jobs (low-competition first)
 - ✍️ **Headline / About / Experience** — professional drafts ready to paste
 - 💌 **Connection / InMail messages** — personalized, non-robotic drafts
 
-> Set a free [Hugging Face token](https://huggingface.co/settings/tokens) (`export HF_API_KEY=...`) to use a real AI model (Mistral-7B) for these. Without it, CADDY uses a built-in expert template engine — both work offline.
+> Set a free [Hugging Face token](https://huggingface.co/settings/tokens) (`export HF_API_KEY=...`) to use a real AI model (Mistral-7B) for these. Without it, SCOUT uses a built-in expert template engine — both work offline.
 
 ## 🔥 NEW: Early-Applicant Filter (Free "Under 10 Applicants")
 
-LinkedIn Premium charges $29.99/month to show jobs with few applicants. CADDY gets you the same signal **for free** — LinkedIn marks low-competition jobs with a **"Be an early applicant"** badge, and CADDY filters to exactly those:
+LinkedIn Premium charges $29.99/month to show jobs with few applicants. SCOUT gets you the same signal **for free** — LinkedIn marks low-competition jobs with a **"Be an early applicant"** badge, and SCOUT filters to exactly those:
 
 ```
 > Python Developer early applicants
@@ -111,13 +111,13 @@ LinkedIn Premium charges $29.99/month to show jobs with few applicants. CADDY ge
 > Data Scientist early applicants in Bengaluru
 ```
 
-CADDY will return only jobs where few people have applied — apply fast, beat the crowd! 🚀
+SCOUT will return only jobs where few people have applied — apply fast, beat the crowd! 🚀
 
 > ⚠️ Honest note: LinkedIn only exposes the *badge* ("Be an early applicant") free — the exact applicant count and your ranking are Premium-only. The badge reliably indicates very low applicant counts (typically < 10), which is the signal that matters for getting noticed.
 
-## 🕐 NEW: Track Jobs Even When CADDY Is Closed
+## 🕐 NEW: Track Jobs Even When SCOUT Is Closed
 
-Don't want to keep the terminal open? Enable CADDY's **background tracker** from inside the bot — no other file needed:
+Don't want to keep the terminal open? Enable SCOUT's **background tracker** from inside the bot — no other file needed:
 
 ```
 > enable background tracker      # installs a cron job (checks every 30 min)
@@ -126,7 +126,7 @@ Don't want to keep the terminal open? Enable CADDY's **background tracker** from
 > latest jobs                    # view everything collected while you were away
 ```
 
-Once enabled, CADDY keeps checking LinkedIn **even when you close the terminal** and saves new jobs to `jobs_results.json` — so next time you open the bot, nothing is lost.
+Once enabled, SCOUT keeps checking LinkedIn **even when you close the terminal** and saves new jobs to `jobs_results.json` — so next time you open the bot, nothing is lost.
 
 **Under the hood (optional, if you prefer the shell):**
 - Install/uninstall manually: `./setup_background_tracker.sh` / `./setup_background_tracker.sh remove`
@@ -141,7 +141,7 @@ Once enabled, CADDY keeps checking LinkedIn **even when you close the terminal**
 
 ## 🎮 LinkedIn Job Tracking Usage
 
-Once CADDY with LinkedIn is running:
+Once SCOUT with LinkedIn is running:
 
 ### Add Job Searches
 ```
@@ -155,7 +155,7 @@ add job search: Machine Learning Engineer, United States
 start monitoring
 ```
 
-CADDY will now check LinkedIn every 60 seconds and alert you instantly when new jobs appear! 🎉
+SCOUT will now check LinkedIn every 60 seconds and alert you instantly when new jobs appear! 🎉
 
 ### Other Commands
 - `list jobs` - Show all tracked searches
@@ -184,14 +184,14 @@ CADDY will now check LinkedIn every 60 seconds and alert you instantly when new 
 
 ## 🎮 Usage
 
-### Standard CADDY
-Once CADDY is running:
+### Standard SCOUT
+Once SCOUT is running:
 
 - **Chat**: Type your message and press ENTER
 - **Clear History**: Type `clear` to reset the conversation
 - **Exit**: Type `exit`, `quit`, or press Ctrl+C
 
-### CADDY with LinkedIn (main.py)
+### SCOUT with LinkedIn (main.py)
 All standard commands PLUS:
 
 - **Add Job Search**: `add job search: <keywords>, <location>, <type>`
@@ -200,16 +200,16 @@ All standard commands PLUS:
 - **Stop Tracking**: `stop monitoring`
 - **View Stats**: `job stats`
 - **Clear Cache**: `clear job cache`
-- **Latest Jobs**: `latest jobs` - show jobs collected in the background while CADDY was closed
+- **Latest Jobs**: `latest jobs` - show jobs collected in the background while SCOUT was closed
 - **Early Applicants**: `Python Developer early applicants` - only low-competition jobs (free "under 10 applicants" filter)
 - **Indeed + Glassdoor + Wellfound Too**: every search also covers Indeed, Glassdoor and Wellfound (results tagged `[Indeed]` / `[Glassdoor]` / `[Wellfound]`, with salary estimates from Glassdoor + Wellfound, and startup jobs from Wellfound)
 
-> 💡 No RapidAPI key? No problem — CADDY automatically falls back to the free LinkedIn search, so `list Python jobs in Remote` works out of the box.
-> 💡 Premium AI features (headline, about, experience, InMail, job discovery) are built-in — see `ai help` inside CADDY.
+> 💡 No RapidAPI key? No problem — SCOUT automatically falls back to the free LinkedIn search, so `list Python jobs in Remote` works out of the box.
+> 💡 Premium AI features (headline, about, experience, InMail, job discovery) are built-in — see `ai help` inside SCOUT.
 
 ## 🎨 Visual Features
 
-### Neon Blue CADDY Logo
+### Neon Blue SCOUT Logo
 ```
 ██████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗
 ██╔════╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝
@@ -225,7 +225,7 @@ All standard commands PLUS:
 - Dynamic terminal experience
 
 ### Color Scheme
-- **Neon Blue (Cyan)**: CADDY logo and borders
+- **Neon Blue (Cyan)**: SCOUT logo and borders
 - **Neon Green**: Matrix background and user prompt
 - **Magenta**: Highlights and accents
 - **Yellow**: System messages
@@ -249,13 +249,13 @@ All standard commands PLUS:
    ...
 
 [SYSTEM] INITIALIZING NEURAL INTERFACE...
-[SYSTEM] CADDY ONLINE - READY FOR INTERACTION
+[SYSTEM] SCOUT ONLINE - READY FOR INTERACTION
 
 ┌─[YOU]
-└──> Hello CADDY
+└──> Hello SCOUT
 
-┌─[CADDY]
-└──> Hello! I'm CADDY, your cyberpunk AI assistant. How can I help you today?
+┌─[SCOUT]
+└──> Hello! I'm SCOUT, your cyberpunk AI assistant. How can I help you today?
 
 ┌─[YOU]
 └──> exit
@@ -290,7 +290,7 @@ time.sleep(0.03)  # Lower = faster, Higher = slower
 ### Use Different AI Model
 
 ```python
-# In CaddyChatbot.__init__()
+# In ScoutChatbot.__init__()
 self.api_url = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
 ```
 
@@ -315,7 +315,7 @@ pip install --upgrade colorama
 - Subsequent responses are faster
 - Consider using an API token for priority access
 
-## 🌟 Why CADDY?
+## 🌟 Why SCOUT?
 
 - **No Local AI** - Everything runs in the cloud
 - **Free Forever** - Hugging Face offers generous free tier

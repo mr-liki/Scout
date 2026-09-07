@@ -1,0 +1,1 @@
+# SCOUT Jobs tracker package

@@ -1,4 +1,4 @@
-# 🚀 START HERE - CADDY LinkedIn Job Tracker
+# 🚀 START HERE - SCOUT LinkedIn Job Tracker
 
 ## Welcome! 👋
 
@@ -10,14 +10,14 @@ You now have a **powerful AI assistant** with **real-time LinkedIn job tracking*
 
 ### New! 🎉 Natural Language Support
 
-CADDY now understands natural language! Just ask:
+SCOUT now understands natural language! Just ask:
 ```
 list AI Engineer jobs in Bengaluru
 find Python Developer jobs in Remote
 show Data Scientist positions in San Francisco
 ```
 
-CADDY will:
+SCOUT will:
 ✅ Search immediately  
 ✅ Show you current jobs  
 ✅ Add to tracking automatically  
@@ -27,7 +27,7 @@ CADDY will:
 
 ### Step 1: Install Dependencies
 ```bash
-cd /Users/likhithr/Caddy
+cd /Users/likhithr/Scout
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -42,10 +42,10 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
-Then in CADDY:
+Then in SCOUT:
 ```
 add job search: Python Developer, Remote, Full-time
-enable background tracker   # keeps tracking even when CADDY is closed
+enable background tracker   # keeps tracking even when SCOUT is closed
 latest jobs                 # see everything collected
 ```
 
@@ -117,7 +117,7 @@ You'll get instant notifications like:
 list jobs                  - Show all your searches
 stop monitoring            - Pause tracking
 background status          - Check the auto-tracker
-enable background tracker  - Track 24/7 (even when CADDY is closed)
+enable background tracker  - Track 24/7 (even when SCOUT is closed)
 disable background tracker - Turn the auto-tracker off
 latest jobs                - View jobs collected in the background
 job stats                  - View statistics
@@ -136,13 +136,13 @@ This will verify:
 - ✅ All dependencies installed
 - ✅ API tracker working
 - ✅ RSS tracker working
-- ✅ CADDY integration working
+- ✅ SCOUT integration working
 
 ---
 
 ## 🎨 Three Ways to Use
 
-### 1. Full CADDY (AI + LinkedIn)
+### 1. Full SCOUT (AI + LinkedIn)
 ```bash
 python3 main.py
 ```
@@ -175,7 +175,7 @@ tracker.start_monitoring(interval=120)
 
 ### vs LinkedIn Premium
 
-| Feature | LinkedIn Premium | Your CADDY | Savings |
+| Feature | LinkedIn Premium | Your SCOUT | Savings |
 |---------|-----------------|------------|---------|
 | Real-time alerts | ✅ Yes (~5 min) | ✅ **Yes (1-2 min)** | - |
 | Multiple searches | ✅ Limited | ✅ **Unlimited** | - |
@@ -190,11 +190,11 @@ tracker.start_monitoring(interval=120)
 ## 🛠️ Files Overview
 
 ### Core Files (Use These):
-- **`main.py`** - ⭐ THE ONLY FILE YOU RUN: full CADDY + LinkedIn + background tracker
+- **`main.py`** - ⭐ THE ONLY FILE YOU RUN: full SCOUT + LinkedIn + background tracker
 - **`background_tracker.py`** - Headless background tracker (managed from main.py)
 - **`linkedin_rss_tracker.py`** - RSS tracker (no API key)
 - **`linkedin_tracker.py`** - API tracker (needs key)
-- **`caddy_with_linkedin.py`** - Older duplicate entry point (not needed - use main.py)
+- **`scout_with_linkedin.py`** - Older duplicate entry point (not needed - use main.py)
 
 ### Utilities:
 - **`setup_linkedin.sh`** - Automated setup
@@ -208,7 +208,7 @@ tracker.start_monitoring(interval=120)
 - **`API_VS_RSS.md`** - Method comparison
 - **`IMPLEMENTATION_SUMMARY.md`** - Technical overview
 
-### Original CADDY:
+### Original SCOUT:
 - **`chatbot.py`** - Simple chatbot version
 
 ---
@@ -221,13 +221,13 @@ tracker.start_monitoring(interval=120)
 brew install tmux
 
 # Start session
-tmux new -s caddy
+tmux new -s scout
 
-# Run CADDY
+# Run SCOUT
 python3 main.py
 
 # Detach (keeps running): Ctrl+B then D
-# Reattach later: tmux attach -t caddy
+# Reattach later: tmux attach -t scout
 ```
 
 ### 2. Best Job Search Keywords
@@ -256,7 +256,7 @@ Every 1800 seconds = 2x per hour (API friendly)
 ### 5. Apply FAST
 - First 10 applicants get 70% of interviews
 - Apply within 1 hour of posting
-- CADDY gives you that edge! 💪
+- SCOUT gives you that edge! 💪
 
 ---
 
@@ -348,9 +348,9 @@ Before you start:
 - [ ] Read QUICK_START.md
 
 Ready to go:
-- [ ] Run CADDY (`python3 main.py`)
+- [ ] Run SCOUT (`python3 main.py`)
 - [ ] Add job searches
-- [ ] Enable background tracker (works even when CADDY is closed)
+- [ ] Enable background tracker (works even when SCOUT is closed)
 - [ ] Apply to jobs FAST! 🚀
 
 ---

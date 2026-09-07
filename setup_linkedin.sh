@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# CADDY LinkedIn Job Tracker Setup Script
+# SCOUT LinkedIn Job Tracker Setup Script
 # This script helps you set up LinkedIn job tracking quickly
 
 echo "=============================================="
-echo "🚀 CADDY LinkedIn Job Tracker Setup"
+echo "🚀 SCOUT LinkedIn Job Tracker Setup"
 echo "=============================================="
 echo ""
 
@@ -76,9 +76,9 @@ echo ""
 echo "Next steps:"
 echo "1. If you haven't already, add your RAPID_API_KEY to .env"
 echo "2. Load environment variables: source .env"
-echo "3. Run CADDY with LinkedIn: python caddy_with_linkedin.py"
+echo "3. Run SCOUT with LinkedIn: python scout_with_linkedin.py"
 echo ""
-echo "Quick commands once inside CADDY:"
+echo "Quick commands once inside SCOUT:"
 echo "  - add job search: Python Developer, Remote, Full-time"
 echo "  - list jobs"
 echo "  - start monitoring"

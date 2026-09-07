@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LinkedIn Job Tracker for CADDY
+LinkedIn Job Tracker for SCOUT
 Real-time job monitoring and notifications
 """
 
@@ -382,7 +382,7 @@ def main():
     ███████╗██║██║ ╚████║██║  ██╗███████╗██████╔╝██║██║ ╚████║
     ╚══════╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═════╝ ╚═╝╚═╝  ╚═══╝
     
-    JOB TRACKER for CADDY
+    JOB TRACKER for SCOUT
     """)
     
     # Initialize tracker

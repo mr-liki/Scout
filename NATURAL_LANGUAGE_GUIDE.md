@@ -2,7 +2,7 @@
 
 ## Overview
 
-CADDY now understands natural language! Just ask for jobs like you would ask a friend.
+SCOUT now understands natural language! Just ask for jobs like you would ask a friend.
 
 ---
 
@@ -42,9 +42,9 @@ show Data Scientist roles
 
 ---
 
-## 🎯 What CADDY Does
+## 🎯 What SCOUT Does
 
-When you ask in natural language, CADDY will:
+When you ask in natural language, SCOUT will:
 
 1. **Extract** job title and location from your message
 2. **Search** LinkedIn immediately
@@ -57,7 +57,7 @@ When you ask in natural language, CADDY will:
 ```
 You: list AI Engineer jobs in Bengaluru
 
-CADDY: [SEARCHING] Looking for jobs on LinkedIn...
+SCOUT: [SEARCHING] Looking for jobs on LinkedIn...
 
 🎯 Found 12 'Ai Engineer' jobs in Bengaluru!
 
@@ -146,7 +146,7 @@ If too broad: "AI Engineer jobs in Bengaluru"
 ## 🔧 What Happens Behind the Scenes
 
 1. **Natural Language Processing**
-   - CADDY parses your message
+   - SCOUT parses your message
    - Extracts job title and location
    - Removes filler words (the, a, for, etc.)
 
@@ -170,10 +170,10 @@ If too broad: "AI Engineer jobs in Bengaluru"
 ### Example 1: AI Engineer in Bengaluru
 ```
 You: hi
-CADDY: Hello! I'm CADDY - your AI assistant with LinkedIn job superpowers!
+SCOUT: Hello! I'm SCOUT - your AI assistant with LinkedIn job superpowers!
 
 You: list me the current AI engineer jobs in bengaluru
-CADDY: [SEARCHING] Looking for jobs on LinkedIn...
+SCOUT: [SEARCHING] Looking for jobs on LinkedIn...
 
 🎯 Found 15 'Ai Engineer' jobs in Bengaluru!
 
@@ -188,35 +188,35 @@ CADDY: [SEARCHING] Looking for jobs on LinkedIn...
 💡 Type 'start monitoring' to get real-time alerts!
 
 You: start monitoring
-CADDY: LinkedIn job monitoring started! Checking every 60 seconds.
+SCOUT: LinkedIn job monitoring started! Checking every 60 seconds.
 ```
 
 ### Example 2: Python Developer Remote
 ```
 You: find python developer jobs remote
-CADDY: [SEARCHING] Looking for jobs on LinkedIn...
+SCOUT: [SEARCHING] Looking for jobs on LinkedIn...
 
 🎯 Found 23 'Python Developer' jobs in Remote!
 
 [... jobs listed ...]
 
 You: start monitoring
-CADDY: Monitoring active! You'll get alerts within 1-2 minutes of new postings.
+SCOUT: Monitoring active! You'll get alerts within 1-2 minutes of new postings.
 ```
 
 ### Example 3: Multiple Searches
 ```
 You: search data scientist positions in san francisco
-CADDY: [Found and listed jobs]
+SCOUT: [Found and listed jobs]
 
 You: also find machine learning engineer jobs in remote
-CADDY: [Found and listed more jobs]
+SCOUT: [Found and listed more jobs]
 
 You: list jobs
-CADDY: [Shows both searches]
+SCOUT: [Shows both searches]
 
 You: start monitoring
-CADDY: Monitoring 2 searches! Alerts coming your way!
+SCOUT: Monitoring 2 searches! Alerts coming your way!
 ```
 
 ---
@@ -240,7 +240,7 @@ CADDY: Monitoring 2 searches! Alerts coming your way!
    - Remove location restriction
    - Example: "AI Engineer" instead of "Senior AI Engineer"
 
-### "CADDY doesn't understand my request"
+### "SCOUT doesn't understand my request"
 
 **Tips:**
 - Use clear job titles: "AI Engineer" not "AI stuff"
@@ -307,14 +307,14 @@ See all tracked searches
 ```
 You: list AI Engineer jobs in Bengaluru
      ↓
-CADDY: [Searches immediately and shows results]
+SCOUT: [Searches immediately and shows results]
 ```
 
 ### Explicit Command (Old way):
 ```
 You: add job search: AI Engineer, Bengaluru, Full-time
      ↓
-CADDY: ✅ Added job search
+SCOUT: ✅ Added job search
 You: start monitoring
 ```
 
@@ -348,10 +348,10 @@ You: also search Python Developer positions in Remote
 You: and Data Scientist roles in San Francisco
 
 You: list jobs
-CADDY: [Shows all 3 searches]
+SCOUT: [Shows all 3 searches]
 
 You: start monitoring
-CADDY: Monitoring 3 searches!
+SCOUT: Monitoring 3 searches!
 ```
 
 ---
@@ -395,10 +395,10 @@ If natural language isn't working:
    - Use common job titles
    - Use common locations
 
-4. **Ask CADDY for help:**
+4. **Ask SCOUT for help:**
    ```
    You: how do I search for jobs?
-   CADDY: [Provides guidance]
+   SCOUT: [Provides guidance]
    ```
 
 ---
@@ -410,7 +410,7 @@ Try it now:
 list AI Engineer jobs in Bengaluru
 ```
 
-CADDY will:
+SCOUT will:
 ✅ Search immediately
 ✅ Show you jobs
 ✅ Add to tracking

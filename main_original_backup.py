@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CADDY - Cyberpunk AI Terminal Assistant
+SCOUT - Cyberpunk AI Terminal Assistant
 A hacker-style chatbot with neon effects
 """
 
@@ -14,9 +14,9 @@ from colorama import Fore, Back, Style, init
 # Initialize colorama
 init(autoreset=True)
 
-class CaddyChatbot:
+class ScoutChatbot:
     def __init__(self, api_key=None):
-        """Initialize CADDY chatbot"""
+        """Initialize SCOUT chatbot"""
         self.api_key = api_key or os.environ.get("HF_API_KEY")
         self.api_url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
         self.conversation_history = []
@@ -31,10 +31,10 @@ class CaddyChatbot:
         greetings = ["hello", "hi", "hey", "greetings", "sup", "yo", "howdy"]
         if any(word in msg for word in greetings):
             responses = [
-                "Hey there! I'm CADDY, your cyberpunk AI assistant. What can I help you with?",
-                "Greetings, user. CADDY systems online and ready to assist.",
+                "Hey there! I'm SCOUT, your cyberpunk AI assistant. What can I help you with?",
+                "Greetings, user. SCOUT systems online and ready to assist.",
                 "Hello! Welcome to the neural network. How can I assist you today?",
-                "Hey! CADDY here. What do you need help with?"
+                "Hey! SCOUT here. What do you need help with?"
             ]
             return random.choice(responses)
         
@@ -50,7 +50,7 @@ class CaddyChatbot:
         
         # What can you do
         if any(phrase in msg for phrase in ["what can you do", "what do you do", "your capabilities", "help me", "can you help"]):
-            return """I'm CADDY, your cyberpunk AI assistant! I can:
+            return """I'm SCOUT, your cyberpunk AI assistant! I can:
 • Have conversations and answer questions
 • Provide information on various topics
 • Help with brainstorming and creative thinking
@@ -61,7 +61,7 @@ What would you like to talk about?"""
         
         # Who are you
         if any(phrase in msg for phrase in ["who are you", "what are you", "tell me about yourself"]):
-            return """I'm CADDY - Cyberpunk AI Terminal Assistant. I'm an AI chatbot designed with a hacker aesthetic, running in your terminal with neon effects and matrix-style visuals. I'm here to chat, help, and provide information. Currently running in OFFLINE MODE using local pattern matching."""
+            return """I'm SCOUT - Cyberpunk AI Terminal Assistant. I'm an AI chatbot designed with a hacker aesthetic, running in your terminal with neon effects and matrix-style visuals. I'm here to chat, help, and provide information. Currently running in OFFLINE MODE using local pattern matching."""
         
         # Jokes
         if any(word in msg for word in ["joke", "funny", "laugh"]):
@@ -99,7 +99,7 @@ What would you like to talk about?"""
             responses = [
                 "Catch you later! Stay in the matrix! 💚",
                 "Goodbye! Come back anytime you need me.",
-                "See you soon! CADDY signing off.",
+                "See you soon! SCOUT signing off.",
                 "Until next time! Keep the cyber vibes alive! ⚡"
             ]
             return random.choice(responses)
@@ -202,8 +202,8 @@ def print_matrix_bg(lines=3):
         line = ''.join(random.choice(chars) for _ in range(80))
         print(Fore.GREEN + Style.DIM + line)
 
-def print_caddy_logo():
-    """Print CADDY logo in pixel/ASCII style"""
+def print_scout_logo():
+    """Print SCOUT logo in pixel/ASCII style"""
     # Clear screen
     os.system('clear' if os.name != 'nt' else 'cls')
     
@@ -211,7 +211,7 @@ def print_caddy_logo():
     print_matrix_bg(2)
     print()
     
-    # CADDY ASCII art in neon blue
+    # SCOUT ASCII art in neon blue
     logo = """
     ██████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗
    ██╔════╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝
@@ -259,23 +259,23 @@ def print_system_message(message):
     """Print system message in hacker style"""
     print(Fore.YELLOW + Style.BRIGHT + f"[SYSTEM] {message}")
 
-def print_caddy_response(message):
-    """Print CADDY's response with style"""
+def print_scout_response(message):
+    """Print SCOUT's response with style"""
     print()
-    print(Fore.CYAN + Style.BRIGHT + "┌─[" + Fore.MAGENTA + "CADDY" + Fore.CYAN + "]")
+    print(Fore.CYAN + Style.BRIGHT + "┌─[" + Fore.MAGENTA + "SCOUT" + Fore.CYAN + "]")
     print(Fore.CYAN + "└──> " + Fore.WHITE + Style.BRIGHT + message)
     print()
 
 def animate_startup():
     """Startup animation sequence"""
-    print_caddy_logo()
+    print_scout_logo()
     
     # Initialization sequence
     init_messages = [
         "INITIALIZING NEURAL INTERFACE...",
         "LOADING AI CORE MODULES...",
         "ESTABLISHING SECURE CONNECTION...",
-        "CADDY ONLINE - READY FOR INTERACTION"
+        "SCOUT ONLINE - READY FOR INTERACTION"
     ]
     
     for msg in init_messages:
@@ -307,7 +307,7 @@ def main():
         animate_startup()
         
         # Initialize chatbot
-        chatbot = CaddyChatbot()
+        chatbot = ScoutChatbot()
         
         # Main loop
         while True:
@@ -330,7 +330,7 @@ def main():
                 
                 if user_input.lower() == 'clear':
                     chatbot.clear_history()
-                    print_caddy_logo()
+                    print_scout_logo()
                     print_system_message("CONVERSATION MEMORY CLEARED")
                     print()
                     continue
@@ -346,7 +346,7 @@ def main():
                 print('\r' + ' ' * 20 + '\r', end='')
                 
                 # Display response
-                print_caddy_response(response)
+                print_scout_response(response)
                 
             except KeyboardInterrupt:
                 print("\n")
