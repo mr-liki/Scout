@@ -15,6 +15,10 @@ Indeed, Glassdoor and Wellfound** in parallel — free, no accounts, no API keys
 
 ## 🚀 Quick start (local)
 
+Run these from `backend/web/` (this directory) — `server.py` serves the
+`frontend/` folder one level up alongside the API, so both must stay in
+place relative to each other.
+
 ```bash
 # 1. Create a venv and install the backend deps
 python3 -m venv venv
@@ -36,11 +40,14 @@ curl "http://localhost:8000/api/health"
 
 ## ☁️ Host it for FREE
 
+Vercel and Netlify config (`vercel.json`, `netlify.toml`) live at the repo
+root, since a deployment needs both `frontend/` and `backend/web/` together.
+
 ### Option A — Vercel (recommended, full experience)
 
-1. Push this folder to a GitHub repo.
+1. Push the repo root to GitHub.
 2. Go to [vercel.com/new](https://vercel.com/new) → **Import** your repo.
-3. Vercel auto-detects the config. Deploy.
+3. Vercel auto-detects `vercel.json` at the repo root. Deploy.
 
 Done. You get the static site **and** the Python API on the free Hobby plan.
 The frontend calls `/api/search` automatically (same origin, no CORS setup).
@@ -49,12 +56,12 @@ The frontend calls `/api/search` automatically (same origin, no CORS setup).
 
 1. Push to GitHub.
 2. Go to [netlify.com](https://netlify.com) → **Add new site** → **Import from Git**.
-3. Build settings: **Build command** = empty, **Publish directory** = `.`
-   (Python functions are auto-detected from `netlify-functions/`).
+3. Build settings are read from the repo-root `netlify.toml`
+   (publish = `frontend`, functions = `backend/web/netlify-functions`).
 
 ### Option C — GitHub Pages (static only)
 
-1. Enable **Pages** → deploy from `scoutweb/` (or a branch).
+1. Enable **Pages** → deploy from `frontend/` (or a branch).
 2. The site works — but without the API it falls back to **demo data** and
    shows a "Demo mode" banner. Perfect for showcasing the design.
 
@@ -67,27 +74,30 @@ The frontend calls `/api/search` automatically (same origin, no CORS setup).
 ## 🧠 Architecture
 
 ```
-scoutweb/
+frontend/
 ├── index.html              # SPA shell
 ├── css/styles.css          # design system (light/dark, responsive)
-├── js/
-│   ├── main.js             # entry + router
-│   ├── ui.js               # templates, rendering, modal, toasts
-│   ├── api.js              # live API client + demo fallback
-│   ├── demo.js             # sample dataset (for static hosting)
-│   └── store.js            # saved jobs + theme (localStorage)
-├── trackers/               # the 4 SCOUT job engines (copied from the CLI)
-│   ├── engine.py           # concurrent search + dedupe + time budget
+└── js/
+    ├── main.js              # entry + router
+    ├── ui.js                # templates, rendering, modal, toasts
+    ├── api.js               # live API client + demo fallback
+    ├── demo.js              # sample dataset (for static hosting)
+    └── store.js             # saved jobs + theme (localStorage)
+
+backend/web/
+├── trackers/                # the 4 SCOUT job engines (copied from the CLI)
+│   ├── engine.py            # concurrent search + dedupe + time budget
 │   ├── linkedin_rss_tracker.py
 │   ├── indeed_tracker.py
 │   ├── glassdoor_tracker.py
 │   └── wellfound_tracker.py
-├── api/search.py           # Vercel serverless function (Python)
+├── api/search.py             # Vercel serverless function (Python)
 ├── netlify-functions/search.py   # Netlify function (Python)
-├── server.py               # local all-in-one server (stdlib only)
-├── vercel.json             # Vercel config
-├── netlify.toml            # Netlify config
+├── server.py                 # local all-in-one server (stdlib only, serves ../../frontend)
 └── requirements.txt
+
+vercel.json                   # Vercel config (repo root)
+netlify.toml                  # Netlify config (repo root)
 ```
 
 ### How a search works

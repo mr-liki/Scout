@@ -35,10 +35,10 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install requirements
-pip install -r requirements.txt
+pip install -r backend/cli/requirements.txt
 
 # Run SCOUT
-python main.py
+python backend/cli/main.py
 ```
 
 ### SCOUT with LinkedIn Job Tracking (Recommended — one file only)
@@ -48,10 +48,10 @@ python main.py
 ```bash
 # 1. Install dependencies
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/cli/requirements.txt
 
 # 2. Run SCOUT — that's it!
-python main.py
+python backend/cli/main.py
 ```
 
 > 💡 No API keys required. SCOUT uses the free LinkedIn public search out of the box. Optional: set `HF_API_KEY` for smarter AI chat, or add a free [RapidAPI key](https://rapidapi.com/rockapis-rockapis-default/api/linkedin-data-api) for more robust results.

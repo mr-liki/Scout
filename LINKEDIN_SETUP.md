@@ -32,7 +32,7 @@ source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate     # Windows
 
 # Install new requirements
-pip install -r requirements.txt
+pip install -r backend/cli/requirements.txt
 ```
 
 ### Step 2: Get RapidAPI LinkedIn Access (Recommended)

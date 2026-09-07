@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .claude/
 .freebuff/
+.vercel
 
 # runtime cache / scratch output
 linkedin_*.json

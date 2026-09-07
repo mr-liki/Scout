@@ -52,7 +52,7 @@ set -a; source .env; set +a
 **`main.py` is the only file you need to run.**
 
 ```bash
-python main.py
+python backend/cli/main.py
 ```
 
 > 💡 No API key required — SCOUT uses the free LinkedIn public search automatically.
@@ -148,7 +148,7 @@ brew install tmux  # macOS
 tmux new -s scout
 
 # Run SCOUT
-python main.py
+python backend/cli/main.py
 
 # Detach (SCOUT keeps running)
 # Press: Ctrl+B, then D
@@ -163,7 +163,7 @@ tmux attach -t scout
 screen -S scout
 
 # Run SCOUT
-python main.py
+python backend/cli/main.py
 
 # Detach (SCOUT keeps running)
 # Press: Ctrl+A, then D
@@ -175,7 +175,7 @@ screen -r scout
 **Using nohup**:
 ```bash
 # Run in background
-nohup python main.py > scout.log 2>&1 &
+nohup python backend/cli/main.py > scout.log 2>&1 &
 
 # Check the log
 tail -f scout.log
@@ -219,7 +219,7 @@ Visit: https://rapidapi.com/developer/billing
 rm jobs_cache.json
 
 # Restart SCOUT
-python main.py
+python backend/cli/main.py
 ```
 
 ---
