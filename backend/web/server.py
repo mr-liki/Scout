@@ -24,7 +24,9 @@ if hasattr(sys.stdout, "reconfigure"):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from trackers.engine import search, health  # noqa: E402
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "frontend")
+)
 PORT = int(os.environ.get("PORT", 8000))
 SEARCH_BUDGET = int(os.environ.get("SEARCH_BUDGET_SECONDS", 20))
 

@@ -123,12 +123,12 @@ Scout/
 3. Read QUICK_START.md
 4. Run python3 test_linkedin.py
 5. Choose method (read API_VS_RSS.md)
-6. Run python3 main.py
+6. Run python3 backend/cli/main.py
 ```
 
 ### Daily Use:
 ```bash
-1. python3 main.py
+1. python3 backend/cli/main.py
 2. add job search: Your Job, Location
 3. enable background tracker   (track even when SCOUT is closed)
 4. latest jobs                (see what was collected)
@@ -266,14 +266,14 @@ Scout/
 ```bash
 # Setup
 ./setup_linkedin.sh                    # Run setup
-pip install -r requirements.txt        # Install deps
+pip install -r backend/cli/requirements.txt        # Install deps
 
 # Testing
 python3 test_linkedin.py               # Test all
 python3 example_usage.py               # See examples
 
 # Running
-python3 main.py                        # ⭐ Full SCOUT (chat + jobs + background tracker)
+python3 backend/cli/main.py                        # ⭐ Full SCOUT (chat + jobs + background tracker)
 python3 background_tracker.py --once   # One-off background check
 python3 linkedin_rss_tracker.py        # RSS only
 
@@ -314,7 +314,7 @@ You now understand the file structure. Time to get started!
 
 **Or jump right in**:
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 Happy job hunting! 🚀💼

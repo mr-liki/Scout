@@ -29,7 +29,7 @@ SCOUT will:
 ```bash
 cd /Users/likhithr/Scout
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/cli/requirements.txt
 ```
 
 ### Step 2: Choose Your Method
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 **`main.py` is the only file you need to run.**
 
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 Then in SCOUT:
@@ -59,7 +59,7 @@ latest jobs                 # see everything collected
 # Get free API key from: https://rapidapi.com/
 export RAPID_API_KEY='your_key_here'
 
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 ---
@@ -144,7 +144,7 @@ This will verify:
 
 ### 1. Full SCOUT (AI + LinkedIn)
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 - Cyberpunk AI chatbot
 - LinkedIn job tracking
@@ -224,7 +224,7 @@ brew install tmux
 tmux new -s scout
 
 # Run SCOUT
-python3 main.py
+python3 backend/cli/main.py
 
 # Detach (keeps running): Ctrl+B then D
 # Reattach later: tmux attach -t scout
@@ -265,14 +265,14 @@ Every 1800 seconds = 2x per hour (API friendly)
 ### "Command not found: python"
 Use `python3` instead:
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 ### "Module not found"
 Install dependencies:
 ```bash
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/cli/requirements.txt
 ```
 
 ### "RAPID_API_KEY not found"
@@ -290,7 +290,7 @@ This is normal! Means:
 ```bash
 # Clear cache and start fresh
 rm jobs_cache*.json
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 ---
@@ -342,13 +342,13 @@ Some ideas:
 
 Before you start:
 - [ ] Virtual environment activated
-- [ ] Dependencies installed (`pip install -r requirements.txt`)
+- [ ] Dependencies installed (`pip install -r backend/cli/requirements.txt`)
 - [ ] Ran test script (`python3 test_linkedin.py`)
 - [ ] Chose method (RSS vs API)
 - [ ] Read QUICK_START.md
 
 Ready to go:
-- [ ] Run SCOUT (`python3 main.py`)
+- [ ] Run SCOUT (`python3 backend/cli/main.py`)
 - [ ] Add job searches
 - [ ] Enable background tracker (works even when SCOUT is closed)
 - [ ] Apply to jobs FAST! 🚀
@@ -359,7 +359,7 @@ Ready to go:
 
 **Start now:**
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 **First commands:**
@@ -408,7 +408,7 @@ You'll be one of the **first applicants** to jobs, which dramatically increases 
 You have everything you need. Time to start job hunting like a pro!
 
 ```bash
-python3 main.py
+python3 backend/cli/main.py
 ```
 
 **Good luck!** 💪💼🎉
