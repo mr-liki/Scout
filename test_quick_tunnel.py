@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 from unittest import mock
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -204,6 +205,156 @@ class TestStartScriptAcceptsQuickTunnelSwitch(unittest.TestCase):
     def test_quick_tunnel_prints_testing_only_note(self):
         content = _read_script("start_backend.ps1")
         self.assertIn("TEMPORARY", content)
+
+    def test_start_script_calls_sync_script_when_configured(self):
+        content = _read_script("start_backend.ps1")
+        self.assertIn("sync_worker_backend_url.py", content)
+        self.assertIn("CLOUDFLARE_API_TOKEN", content)
+        self.assertIn("CLOUDFLARE_ACCOUNT_ID", content)
+
+
+# ============================================================
+# TEST 9b: Cloudflare Worker auto-sync script
+# ============================================================
+
+class TestWorkerBackendUrlSync(unittest.TestCase):
+    """infra/windows/sync_worker_backend_url.py: pushes BACKEND_API_URL to
+    the deployed Worker via the Cloudflare API. No real Cloudflare API is
+    ever called -- urllib.request.urlopen is mocked throughout."""
+
+    def setUp(self):
+        import importlib.util
+        script_path = os.path.join(REPO_ROOT, "infra", "windows", "sync_worker_backend_url.py")
+        spec = importlib.util.spec_from_file_location("sync_worker_backend_url", script_path)
+        self.mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.mod)
+
+        import tempfile
+        self.tmpdir = tempfile.mkdtemp()
+        self.env_path = os.path.join(self.tmpdir, ".env.production")
+        self.worker_js_path = os.path.join(self.tmpdir, "worker.js")
+        self.wrangler_path = os.path.join(self.tmpdir, "wrangler.toml")
+
+        with open(self.worker_js_path, "w", encoding="utf-8") as f:
+            f.write("export default { async fetch(request, env) { return new Response('ok'); } };")
+        with open(self.wrangler_path, "w", encoding="utf-8") as f:
+            f.write('name = "scout"\nmain = "frontend/worker.js"\ncompatibility_date = "2026-09-08"\n')
+
+        self.mod.ENV_FILE = Path(self.env_path)
+        self.mod.WORKER_JS_PATH = Path(self.worker_js_path)
+        self.mod.WRANGLER_TOML_PATH = Path(self.wrangler_path)
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _write_env(self, token="tok_abc123", account_id="acct_xyz789"):
+        with open(self.env_path, "w", encoding="utf-8") as f:
+            f.write(f"CLOUDFLARE_API_TOKEN={token}\nCLOUDFLARE_ACCOUNT_ID={account_id}\n")
+
+    def test_missing_env_file_raises_clear_error(self):
+        with self.assertRaises(SystemExit):
+            self.mod.load_env_value("CLOUDFLARE_API_TOKEN")
+
+    def test_blank_value_raises(self):
+        self._write_env(token="")
+        with self.assertRaises(SystemExit):
+            self.mod.load_env_value("CLOUDFLARE_API_TOKEN")
+
+    def test_loads_configured_value(self):
+        self._write_env(token="tok_abc123")
+        self.assertEqual(self.mod.load_env_value("CLOUDFLARE_API_TOKEN"), "tok_abc123")
+
+    def test_compatibility_date_read_from_wrangler_toml(self):
+        self.assertEqual(self.mod.load_compatibility_date(), "2026-09-08")
+
+    def test_rejects_non_https_backend_url(self):
+        self._write_env()
+        with self.assertRaises(SystemExit):
+            self.mod.sync("http://insecure.example.com")
+
+    def test_multipart_body_contains_correct_bindings(self):
+        metadata = {
+            "main_module": "worker.js",
+            "bindings": [
+                {"type": "assets", "name": "ASSETS"},
+                {"type": "plain_text", "name": "BACKEND_API_URL", "text": "https://x.trycloudflare.com"},
+            ],
+            "compatibility_date": "2026-09-08",
+            "keep_assets": True,
+        }
+        body = self.mod.build_multipart_body(metadata, "export default {};", "BOUNDARY")
+        text = body.decode("utf-8")
+        self.assertIn('"type":"assets"', text.replace(" ", ""))
+        self.assertIn("BACKEND_API_URL", text)
+        self.assertIn("https://x.trycloudflare.com", text)
+        self.assertIn('"keep_assets":true', text.replace(" ", ""))
+        self.assertIn("export default {};", text)
+
+    def test_successful_sync_calls_correct_url_and_method(self):
+        self._write_env(token="tok_abc123", account_id="acct_xyz789")
+        captured = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b'{"success": true, "result": {}}'
+
+        def fake_urlopen(request, timeout=30):
+            captured["url"] = request.full_url
+            captured["method"] = request.get_method()
+            captured["auth_header"] = request.get_header("Authorization")
+            return FakeResponse()
+
+        with mock.patch.object(self.mod.urllib.request, "urlopen", side_effect=fake_urlopen):
+            self.mod.sync("https://representing-allen-telephone-current.trycloudflare.com")
+
+        self.assertEqual(
+            captured["url"],
+            "https://api.cloudflare.com/client/v4/accounts/acct_xyz789/workers/scripts/scout",
+        )
+        self.assertEqual(captured["method"], "PUT")
+        self.assertEqual(captured["auth_header"], "Bearer tok_abc123")
+
+    def test_api_failure_exits_nonzero(self):
+        self._write_env()
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b'{"success": false, "errors": [{"code": 10000, "message": "Authentication error"}]}'
+
+        with mock.patch.object(self.mod.urllib.request, "urlopen", return_value=FakeResponse()):
+            with self.assertRaises(SystemExit):
+                self.mod.sync("https://x.trycloudflare.com")
+
+    def test_http_error_never_leaks_token_in_output(self):
+        import urllib.error
+        import io
+        self._write_env(token="tok_super_secret_value")
+
+        def raise_http_error(request, timeout=30):
+            raise urllib.error.HTTPError(
+                url="https://api.cloudflare.com/...", code=403, msg="Forbidden",
+                hdrs=None, fp=io.BytesIO(b'{"errors":[{"code":10001,"message":"Bad token"}]}'),
+            )
+
+        with mock.patch.object(self.mod.urllib.request, "urlopen", side_effect=raise_http_error):
+            captured_output = io.StringIO()
+            with mock.patch("sys.stdout", captured_output):
+                with self.assertRaises(SystemExit):
+                    self.mod.sync("https://x.trycloudflare.com")
+        self.assertNotIn("tok_super_secret_value", captured_output.getvalue())
 
 
 # ============================================================

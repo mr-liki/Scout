@@ -111,11 +111,24 @@ because:
 
 ## Updating the URL when the Quick Tunnel restarts
 
-Every time `.\infra\windows\start_backend.ps1 -IncludeQuickTunnel` is run,
-a **new** random URL is generated (see `docs/QUICK_TUNNEL_TESTING.md`).
-After copying the new URL from the `cloudflared-quick` logs, update
-`BACKEND_API_URL` in the dashboard (step 4 above) and save -- no redeploy of
-the Worker's code is needed, only the variable changes.
+Every time `.\infra\windows\start_backend.ps1 -IncludeQuickTunnel` is run, a
+**new** random URL is generated. Two ways to get `BACKEND_API_URL` updated:
+
+- **Automatic (recommended):** configure `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID` once (see `docs/QUICK_TUNNEL_TESTING.md` step 0).
+  `start_backend.ps1 -IncludeQuickTunnel` then calls
+  `infra/windows/sync_worker_backend_url.py`, which redeploys
+  `frontend/worker.js` unchanged via the Workers API with only the
+  `BACKEND_API_URL` binding updated (`keep_assets: true`, so static files
+  aren't re-uploaded). This writes the binding directly onto the live
+  deployed version. This distinction matters: this project was previously
+  hit by dashboard-set Variables not reliably reaching the Production
+  environment of a Git-connected ("Workers Builds") Worker -- the API-based
+  redeploy sidesteps that entirely by setting the binding on the actual
+  version that's live, not on a separate "Variables" record whose
+  propagation timing is opaque.
+- **Manual:** copy the new URL from the `cloudflared-quick` logs and paste
+  it into `BACKEND_API_URL` in the dashboard (step 4 above).
 
 ## Health verification (after `BACKEND_API_URL` is set)
 

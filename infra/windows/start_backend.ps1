@@ -112,11 +112,42 @@ if ($IncludeTunnel) {
 if ($IncludeQuickTunnel) {
     Write-Host "[INFO] Starting Quick Tunnel (no token required)..."
     Invoke-Expression "$composeCmd --profile quick-tunnel up -d cloudflared-quick"
+
     Write-Host "[INFO] Waiting for the trycloudflare.com URL to appear in logs..."
-    Start-Sleep -Seconds 5
-    Invoke-Expression "$composeCmd --profile quick-tunnel logs cloudflared-quick" |
-        Select-String -Pattern "trycloudflare\.com"
-    Write-Host "[NOTE] This URL is TEMPORARY (testing only) -- see docs/QUICK_TUNNEL_TESTING.md." -ForegroundColor Yellow
+    $tunnelUrl = $null
+    $urlWaitSeconds = 0
+    while (-not $tunnelUrl -and $urlWaitSeconds -lt 30) {
+        $logLine = Invoke-Expression "$composeCmd --profile quick-tunnel logs cloudflared-quick" |
+            Select-String -Pattern "https://[a-z0-9-]+\.trycloudflare\.com"
+        if ($logLine) {
+            $tunnelUrl = $logLine.Matches[0].Value
+        } else {
+            Start-Sleep -Seconds 3
+            $urlWaitSeconds += 3
+        }
+    }
+
+    if ($tunnelUrl) {
+        Write-Host "[OK] Quick Tunnel URL: $tunnelUrl" -ForegroundColor Green
+        Write-Host "[NOTE] This URL is TEMPORARY (testing only) -- see docs/QUICK_TUNNEL_TESTING.md." -ForegroundColor Yellow
+
+        $syncScript = Join-Path $ProjectRoot "infra\windows\sync_worker_backend_url.py"
+        $hasCfCreds = (Select-String -Path $envFile -Pattern "^CLOUDFLARE_API_TOKEN=.+" -Quiet) -and
+                      (Select-String -Path $envFile -Pattern "^CLOUDFLARE_ACCOUNT_ID=.+" -Quiet)
+        if ($hasCfCreds) {
+            Write-Host "[INFO] Syncing BACKEND_API_URL to the Cloudflare Worker..."
+            python "$syncScript" "$tunnelUrl"
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "[WARN] Worker sync failed -- scout.apexora.workers.dev/api/* may still point at an old URL." -ForegroundColor Yellow
+                Write-Host "       See docs/QUICK_TUNNEL_TESTING.md to update it manually." -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "[SKIP] CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not configured -- Worker not auto-synced." -ForegroundColor Yellow
+            Write-Host "       Update BACKEND_API_URL manually, or see docs/QUICK_TUNNEL_TESTING.md to enable auto-sync." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "[WARN] Could not read the Quick Tunnel URL from logs after ${urlWaitSeconds}s." -ForegroundColor Yellow
+    }
 }
 
 # ── Verify ──────────────────────────────────────────────────────
