@@ -1,12 +1,14 @@
 /**
  * config.js — SCOUTJOBS API configuration.
  *
- * Cloudflare Pages rewrites this file via build-time variable injection,
- * or you can manually edit the production URL below before pushing.
+ * Production: leave apiBase as "" (same-origin). The Cloudflare Worker
+ * (frontend/worker.js) proxies /api/* to the backend server-side, so the
+ * browser never needs -- and must never be given -- the backend's tunnel
+ * URL. See docs/CLOUDFLARE_API_PROXY.md.
  *
- * For local development, set apiBase to "" (same-origin) or
- * "http://localhost:8000" if the dev server runs on a different port.
+ * For local development against a backend running on a different port,
+ * set apiBase to e.g. "http://localhost:8000".
  */
 window.SCOUTJOBS_CONFIG = {
-  apiBase: "", // Set to "https://api.<YOUR_DOMAIN>" for production
+  apiBase: "",
 };

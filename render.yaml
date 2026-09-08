@@ -1,0 +1,63 @@
+# Render Blueprint for SCOUTJOBS.
+#
+# STATUS: OPTIONAL ALTERNATIVE DEPLOYMENT -- NOT CURRENT PRODUCTION.
+# Current production runs on the dedicated Windows PC via Docker Desktop
+# (see infra/docker-compose.prod.yml and docs/LOCAL_PRODUCTION_DEPLOYMENT.md).
+# This file is kept working as a documented fallback and has no effect on
+# local Docker startup.
+#
+# Defines exactly ONE free-tier Render Web Service that runs both the
+# FastAPI API and the single LinkedIn RQ worker (via infra/render/start_render.py)
+# inside one container. No Render PostgreSQL, no Render Redis, no separate
+# background/cron worker service, no cloudflared -- Neon and Upstash are
+# external managed services supplied through DATABASE_URL / REDIS_URL.
+services:
+  - name: scoutjobs-api
+    type: web
+    runtime: docker
+    plan: free
+    dockerfilePath: infra/Dockerfile.backend
+    dockerContext: .
+    dockerCommand: python infra/render/start_render.py
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: SCOUT_ENV
+        value: production
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DEBUG
+        value: "false"
+      - key: APP_VERSION
+        value: 2.0.0
+      - key: CORS_ORIGINS
+        value: https://scout.apexora.workers.dev
+      - key: LINKEDIN_JOB_TIMEOUT_SECONDS
+        value: "1200"
+      - key: SEARCH_STALE_AFTER_SECONDS
+        value: "1800"
+      - key: SEARCH_CACHE_TTL_SECONDS
+        value: "90"
+      - key: DETAIL_CACHE_TTL_SECONDS
+        value: "1800"
+      - key: RATE_LIMIT_SEARCH_PER_MINUTE
+        value: "10"
+      - key: RATE_LIMIT_POLL_PER_MINUTE
+        value: "60"
+      - key: RATE_LIMIT_DETAIL_PER_MINUTE
+        value: "20"
+      - key: DB_POOL_SIZE
+        value: "2"
+      - key: DB_MAX_OVERFLOW
+        value: "2"
+      - key: DB_POOL_TIMEOUT
+        value: "30"
+      - key: DB_POOL_RECYCLE
+        value: "300"
+      # Secrets -- entered manually in the Render dashboard, never committed.
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false

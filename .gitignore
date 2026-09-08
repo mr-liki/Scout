@@ -11,4 +11,29 @@ linkedin_*.json
 linkedin_*.json.partial
 linkedin_*.json.partial.json
 linkedin_*.html
-linkedin_connector.py
+
+# Local development
+backend/web/.glassdoor_cache.json
+backend/web/.wellfound_cache.json
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.production
+.env.production.local
+
+# Docker
+infra/.env.production
+
+# Database backups
+/data/backups/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

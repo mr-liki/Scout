@@ -1,0 +1,1 @@
+# SCOUTJOBS API package

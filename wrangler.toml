@@ -1,0 +1,25 @@
+# Cloudflare Worker configuration for SCOUTJOBS.
+#
+# Serves the static frontend (frontend/) and proxies /api/* to the backend
+# (frontend/worker.js) so the browser only ever talks to
+# https://scout.apexora.workers.dev.
+#
+# NOTE: previously this project was deployed as a zero-config,
+# dashboard-managed "Workers Static Assets" site with no wrangler.toml at
+# all. This file is required to add the /api/* proxy Worker code alongside
+# the existing static assets. If the Cloudflare dashboard's configured
+# build "Root directory" for this project is not the repository root,
+# move this file there instead -- see docs/CLOUDFLARE_API_PROXY.md.
+
+name = "scout"
+main = "frontend/worker.js"
+compatibility_date = "2026-09-08"
+
+[assets]
+directory = "./frontend"
+binding = "ASSETS"
+
+# BACKEND_API_URL is set as a Cloudflare dashboard Variable (Workers & Pages
+# -> scout -> Settings -> Variables), NOT here -- it changes whenever the
+# Quick Tunnel restarts and must never be committed to source control.
+# See docs/CLOUDFLARE_API_PROXY.md.

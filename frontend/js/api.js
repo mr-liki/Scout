@@ -26,7 +26,7 @@ export function setApiBase(base) {
 export function probeApi() {
   if (_live !== null) return Promise.resolve(_live);
   if (_probePromise) return _probePromise;
-  _probePromise = fetch(`${_apiBase}/healthz`, { signal: AbortSignal.timeout(4000) })
+  _probePromise = fetch(`${_apiBase}/api/healthz`, { signal: AbortSignal.timeout(4000) })
     .then((r) => {
       _live = r.ok;
       return _live;

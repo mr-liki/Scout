@@ -761,5 +761,422 @@ class TestFetchLinkedinJobsIntegration(unittest.TestCase):
                 os.remove(checkpoint_path)
 
 
+
+# ============================================================
+# ISSUE 1 - TERMINAL EMPTY FALSE POSITIVE
+# ============================================================
+
+
+class TestTerminalEmptyFalsePositive(unittest.TestCase):
+    """Arbitrary HTML fragments with visible text must NOT become
+    terminal_empty after a short page."""
+
+    def test_visible_text_fragments_not_terminal_empty(self):
+        fragments = [
+            "<div>temporary backend issue</div>",
+            "<div>maintenance</div>",
+            "<p>oops</p>",
+            "<div>Please try again later</div>",
+            "<span>Service unavailable</span>",
+            "<div>Something went wrong</div>",
+        ]
+        for frag in fragments:
+            with self.assertRaises(
+                lc.LinkedInUnexpectedResponse,
+                msg=f"Fragment should NOT be terminal_empty: {frag}",
+            ):
+                lc.classify_search_response_html(
+                    frag,
+                    previous_page_card_count=9,
+                )
+
+    def test_empty_fragment_after_short_page_still_ok(self):
+        """Trivially empty markup after a short page is still empty."""
+        result = lc.classify_search_response_html(
+            "", previous_page_card_count=9
+        )
+        self.assertEqual(result, "empty")
+
+    def test_comment_only_fragment_after_short_page(self):
+        """A comment-only fragment with no visible text after a short page
+        is terminal_empty (benign end-of-results signal)."""
+        result = lc.classify_search_response_html(
+            "<!-- no more postings -->",
+            previous_page_card_count=5,
+        )
+        self.assertEqual(result, "terminal_empty")
+
+    def test_visible_text_fragment_after_full_page_is_unexpected(self):
+        """A fragment with visible text after a FULL page is still unexpected."""
+        with self.assertRaises(lc.LinkedInUnexpectedResponse):
+            lc.classify_search_response_html(
+                "<div>temporary backend issue</div>",
+                previous_page_card_count=10,
+            )
+
+
+# ============================================================
+# ISSUE 2 - FINAL ZERO CONCLUSIVE
+# ============================================================
+
+
+class TestFinalZeroConclusive(unittest.TestCase):
+    """When all accepted jobs expire before final output, the top-level
+    zero_conclusive must be True for a complete successful search."""
+
+    def test_final_zero_conclusive_after_all_jobs_expire(self):
+        good_pages = {0: [("1001", "1 minutes ago", "Engineer A")]}
+
+        def dispatcher(url, params):
+            start = params.get("start")
+            if start in good_pages:
+                return FakeResponse(
+                    200, make_page_html(good_pages[start])
+                )
+            return FakeResponse(200, "")
+
+        original_create_session = lc.create_session
+
+        def fake_create_session(*args, **kwargs):
+            session = original_create_session(*args, **kwargs)
+            session.get = lambda url, params=None, timeout=None: dispatcher(
+                url, params
+            )
+            return session
+
+        def fake_finalize(jobs, posted_within_seconds):
+            return [], {"expired": len(jobs), "unknown": 0}
+
+        with mock.patch.object(
+            lc, "create_session", side_effect=fake_create_session
+        ):
+            with mock.patch("time.sleep", return_value=None):
+                with mock.patch.object(
+                    lc,
+                    "finalize_jobs_for_output",
+                    side_effect=fake_finalize,
+                ):
+                    data = lc.fetch_linkedin_jobs(
+                        keywords="engineer",
+                        location="India",
+                        max_jobs=10,
+                        max_pages=3,
+                        fetch_details=False,
+                        posted_within="5m",
+                        start=0,
+                    )
+
+        self.assertEqual(data["total_jobs"], 0)
+        self.assertTrue(data["zero_conclusive"])
+        self.assertEqual(data["search_status"], "success")
+        self.assertTrue(data["search_complete"])
+        # empty_result_is_conclusive remains the search-stage value
+        # (which was False because search found jobs)
+        self.assertFalse(data["empty_result_is_conclusive"])
+
+
+# ============================================================
+# ISSUE 3 - CHECKPOINT RATE/CIRCUIT TELEMETRY
+# ============================================================
+
+
+class TestCheckpointTelemetry(unittest.TestCase):
+    """Checkpoint JSON must include circuit breaker and rate telemetry."""
+
+    def test_checkpoint_contains_required_telemetry(self):
+        good_pages = {0: [("1101", "1 minutes ago", "A")]}
+
+        def dispatcher(url, params):
+            start = params.get("start")
+            if start in good_pages:
+                return FakeResponse(
+                    200, make_page_html(good_pages[start])
+                )
+            return FakeResponse(200, "")
+
+        original_create_session = lc.create_session
+
+        def fake_create_session(*args, **kwargs):
+            session = original_create_session(*args, **kwargs)
+            session.get = lambda url, params=None, timeout=None: dispatcher(
+                url, params
+            )
+            return session
+
+        checkpoint_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "_test_checkpoint_telemetry.partial.json",
+        )
+        if os.path.exists(checkpoint_path):
+            os.remove(checkpoint_path)
+
+        try:
+            with mock.patch.object(
+                lc, "create_session", side_effect=fake_create_session
+            ):
+                with mock.patch("time.sleep", return_value=None):
+                    data = lc.fetch_linkedin_jobs(
+                        keywords="engineer",
+                        location="India",
+                        max_jobs=10,
+                        max_pages=3,
+                        fetch_details=False,
+                        checkpoint_file=checkpoint_path,
+                    )
+
+            self.assertTrue(os.path.exists(checkpoint_path))
+            with open(checkpoint_path, "r", encoding="utf-8") as f:
+                checkpoint = json.load(f)
+
+            # Required top-level keys
+            self.assertIn("circuit_breaker", checkpoint)
+            self.assertIn("rate_limit", checkpoint)
+            self.assertIn("failed_start", checkpoint)
+            self.assertIn("last_successful_start", checkpoint)
+            self.assertIn("search_status", checkpoint)
+            self.assertIn("search_complete", checkpoint)
+            self.assertIn("stop_reason", checkpoint)
+            self.assertIn("resume", checkpoint)
+
+            # Circuit breaker structure
+            cb = checkpoint["circuit_breaker"]
+            self.assertIn("opened", cb)
+            self.assertIn("reason", cb)
+            self.assertIn("failed_start", cb)
+            self.assertIn("failed_page", cb)
+
+            # Rate limit structure
+            rl = checkpoint["rate_limit"]
+            self.assertIn("total_requests", rl)
+            self.assertIn("successful_requests", rl)
+            self.assertIn("rate_limit_events", rl)
+            self.assertIn("soft_limit_events", rl)
+            self.assertIn("soft_limit_recoveries", rl)
+            self.assertIn("current_interval_seconds", rl)
+        finally:
+            if os.path.exists(checkpoint_path):
+                os.remove(checkpoint_path)
+
+    def test_checkpoint_circuit_breaker_on_no_details_run(self):
+        """--no-details runs with a circuit breaker must also save
+        rate/circuit telemetry."""
+        good_pages = {0: [("1111", "1 minutes ago", "A")]}
+
+        def dispatcher(url, params):
+            start = params.get("start")
+            if start in good_pages:
+                return FakeResponse(
+                    200, make_page_html(good_pages[start])
+                )
+            if start == 10:
+                return FakeResponse(
+                    200, "Please verify you are human (captcha)."
+                )
+            return FakeResponse(200, "")
+
+        original_create_session = lc.create_session
+
+        def fake_create_session(*args, **kwargs):
+            session = original_create_session(*args, **kwargs)
+            session.get = lambda url, params=None, timeout=None: dispatcher(
+                url, params
+            )
+            return session
+
+        checkpoint_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "_test_checkpoint_cb_no_detail.partial.json",
+        )
+        if os.path.exists(checkpoint_path):
+            os.remove(checkpoint_path)
+
+        try:
+            with mock.patch.object(
+                lc, "create_session", side_effect=fake_create_session
+            ):
+                with mock.patch("time.sleep", return_value=None):
+                    data = lc.fetch_linkedin_jobs(
+                        keywords="engineer",
+                        location="India",
+                        max_jobs=100,
+                        max_pages=5,
+                        fetch_details=False,
+                        checkpoint_file=checkpoint_path,
+                    )
+
+            self.assertEqual(
+                data["search_stop_reason"],
+                "soft_limit_circuit_breaker",
+            )
+
+            with open(checkpoint_path, "r", encoding="utf-8") as f:
+                checkpoint = json.load(f)
+
+            self.assertIn("circuit_breaker", checkpoint)
+            self.assertTrue(checkpoint["circuit_breaker"]["opened"])
+            self.assertIn("rate_limit", checkpoint)
+            self.assertIn(
+                "soft_limit_events", checkpoint["rate_limit"]
+            )
+        finally:
+            if os.path.exists(checkpoint_path):
+                os.remove(checkpoint_path)
+
+
+# ============================================================
+# ISSUE 4 - FRESHNESS BOUNDARY (whole-second truncation)
+# ============================================================
+
+
+class TestFreshnessExactBoundary(unittest.TestCase):
+    """Freshness uses deterministic whole-second truncation (never
+    banker's rounding). For a 300-second window and '5 minutes ago':
+      0 sec elapsed -> pass
+      0.5 sec elapsed -> pass (int(0.5) = 0)
+      1.0 sec elapsed -> fail (int(1.0) = 1)
+    """
+
+    def test_boundary_zero_half_one_seconds(self):
+        clock = FakeClock(
+            start_epoch=1_700_000_000.0,
+            start_monotonic=1_000_000.0,
+        )
+
+        with mock.patch("time.time", clock.time), mock.patch(
+            "time.monotonic", clock.monotonic
+        ):
+            job = {}
+            lc.record_posted_observation(
+                job,
+                "5 minutes ago",
+                source="linkedin_search_card_relative_display",
+                observed_at_epoch=clock.time(),
+            )
+
+            # 0 seconds elapsed: 300 + 0 = 300 <= 300 -> pass
+            passed = lc.evaluate_job_freshness(
+                job, 300, now_epoch=clock.time()
+            )
+            self.assertTrue(passed)
+            self.assertFalse(job["freshness_exact"])
+
+            # 0.5 seconds elapsed: int(0.5) = 0, 300 + 0 = 300 <= 300 -> pass
+            clock.advance(0.5)
+            passed = lc.evaluate_job_freshness(
+                job, 300, now_epoch=clock.time()
+            )
+            self.assertTrue(passed)
+
+            # 1.0 seconds elapsed: int(1.0) = 1, 300 + 1 = 301 > 300 -> fail
+            clock.advance(0.5)
+            passed = lc.evaluate_job_freshness(
+                job, 300, now_epoch=clock.time()
+            )
+            self.assertFalse(passed)
+
+    def test_freshness_exact_always_false(self):
+        clock = FakeClock()
+        with mock.patch("time.time", clock.time), mock.patch(
+            "time.monotonic", clock.monotonic
+        ):
+            job = {}
+            lc.record_posted_observation(
+                job,
+                "1 minutes ago",
+                source="linkedin_search_card_relative_display",
+                observed_at_epoch=clock.time(),
+            )
+            lc.evaluate_job_freshness(
+                job, 300, now_epoch=clock.time()
+            )
+            self.assertFalse(job["freshness_exact"])
+
+
+# ============================================================
+# ISSUE 5 - DETAIL RESPONSE SOFT-BLOCK HARDENING
+# ============================================================
+
+
+class TestDetailInterstitialHardening(unittest.TestCase):
+    """Detail HTTP 200 interstitial/challenge bodies must not reset
+    the adaptive rate controller or be cached as valid detail."""
+
+    def test_detail_interstitial_not_marked_success(self):
+        session = fresh_rate_session()
+
+        def dispatcher(url, params):
+            if "jobPosting" in url:
+                return FakeResponse(
+                    200,
+                    "Please complete this security verification "
+                    "challenge.",
+                )
+            return FakeResponse(200, "")
+
+        session.get = lambda url, params=None, timeout=None: dispatcher(
+            url, params
+        )
+
+        with mock.patch("time.sleep", return_value=None):
+            with self.assertRaises(lc.LinkedInUnexpectedResponse):
+                lc.fetch_detail_html(
+                    session=session,
+                    job_id="9999",
+                    detail_html_cache={},
+                )
+
+        controller = lc._rate_controller(session)
+        # HTTP 200 interstitial must NOT be counted as a success
+        self.assertEqual(controller.successful_requests, 0)
+
+    def test_detail_valid_response_marked_success(self):
+        session = fresh_rate_session()
+        valid_html = make_detail_html("9998", "2 minutes ago")
+
+        def dispatcher(url, params):
+            if "jobPosting" in url:
+                return FakeResponse(200, valid_html)
+            return FakeResponse(200, "")
+
+        session.get = lambda url, params=None, timeout=None: dispatcher(
+            url, params
+        )
+
+        with mock.patch("time.sleep", return_value=None):
+            result = lc.fetch_detail_html(
+                session=session,
+                job_id="9998",
+                detail_html_cache={},
+            )
+
+        self.assertIn("html", result)
+        controller = lc._rate_controller(session)
+        self.assertGreaterEqual(controller.successful_requests, 1)
+
+    def test_detail_interstitial_not_cached(self):
+        session = fresh_rate_session()
+        cache = {}
+
+        def dispatcher(url, params):
+            if "jobPosting" in url:
+                return FakeResponse(
+                    200, "Unusual activity detected, please verify."
+                )
+            return FakeResponse(200, "")
+
+        session.get = lambda url, params=None, timeout=None: dispatcher(
+            url, params
+        )
+
+        with mock.patch("time.sleep", return_value=None):
+            with self.assertRaises(lc.LinkedInUnexpectedResponse):
+                lc.fetch_detail_html(
+                    session=session,
+                    job_id="8888",
+                    detail_html_cache=cache,
+                )
+
+        self.assertNotIn("8888", cache)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

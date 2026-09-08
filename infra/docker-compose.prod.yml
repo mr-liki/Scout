@@ -1,0 +1,172 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-scoutjobs}
+      POSTGRES_USER: ${POSTGRES_USER:-scoutjobs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scoutjobs} -d ${POSTGRES_DB:-scoutjobs}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Do NOT publish port 5432 to host
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: >
+      valkey-server
+      --appendonly yes
+      --maxmemory 768mb
+      --maxmemory-policy noeviction
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Do NOT publish port 6379 to host
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-scoutjobs}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-scoutjobs}
+      - REDIS_URL=redis://valkey:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
+      - TRUST_CF_CONNECTING_IP=${TRUST_CF_CONNECTING_IP:-false}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LINKEDIN_JOB_TIMEOUT_SECONDS=${LINKEDIN_JOB_TIMEOUT_SECONDS:-1200}
+      - SEARCH_STALE_AFTER_SECONDS=${SEARCH_STALE_AFTER_SECONDS:-1800}
+      - SEARCH_CACHE_TTL_SECONDS=${SEARCH_CACHE_TTL_SECONDS:-90}
+      - DETAIL_CACHE_TTL_SECONDS=${DETAIL_CACHE_TTL_SECONDS:-1800}
+      - RATE_LIMIT_SEARCH_PER_MINUTE=${RATE_LIMIT_SEARCH_PER_MINUTE:-10}
+      - RATE_LIMIT_POLL_PER_MINUTE=${RATE_LIMIT_POLL_PER_MINUTE:-60}
+      - RATE_LIMIT_DETAIL_PER_MINUTE=${RATE_LIMIT_DETAIL_PER_MINUTE:-20}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-5}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-5}
+      - GIT_SHA=${GIT_SHA:-unknown}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Port 8000 is internal only, accessed via cloudflared
+
+  linkedin_worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-scoutjobs}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-scoutjobs}
+      - REDIS_URL=redis://valkey:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LINKEDIN_JOB_TIMEOUT_SECONDS=${LINKEDIN_JOB_TIMEOUT_SECONDS:-1200}
+      - SEARCH_STALE_AFTER_SECONDS=${SEARCH_STALE_AFTER_SECONDS:-1800}
+      - GIT_SHA=${GIT_SHA:-unknown}
+    command: ["python", "-m", "backend.worker.runner"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from redis import Redis; r=Redis.from_url('redis://valkey:6379/0'); r.ping()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    depends_on:
+      api:
+        condition: service_healthy
+    # Token passed via TUNNEL_TOKEN env var (not a command-line arg) so it
+    # never appears in `docker inspect`/`ps` process arguments or logs.
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # DEVELOPMENT/TESTING ONLY -- generates a temporary, random
+  # https://xxxx.trycloudflare.com URL. No token, no DNS, no permanent
+  # hostname. A separate service (not the named `cloudflared` service above)
+  # so starting one never touches the other. See docs/QUICK_TUNNEL_TESTING.md.
+  cloudflared-quick:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles:
+      - quick-tunnel
+    depends_on:
+      api:
+        condition: service_healthy
+    command: tunnel --no-autoupdate --url http://api:8000
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  postgres_data:
+  valkey_data:
+
+networks:
+  backend:
+    driver: bridge
