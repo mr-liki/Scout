@@ -316,7 +316,7 @@ async function renderResults(q, location) {
     under_10: under10,
     easy_apply: easyApply,
     sort: "newest",
-    limit: 100,
+    limit: 10,
   });
 }
 

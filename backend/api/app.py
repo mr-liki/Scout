@@ -233,6 +233,10 @@ async def create_search(
     )
     session.add(search)
     await session.flush()
+    # Commit before enqueueing -- the worker uses a separate DB connection
+    # and can start executing the job before it exists, and needs the row
+    # to actually be durable, not just visible inside this transaction.
+    await session.commit()
 
     search_id = str(search.id)
 
@@ -245,7 +249,7 @@ async def create_search(
         job = q.enqueue(
             "backend.worker.linkedin_worker.run_linkedin_search",
             search_id,
-            timeout=settings.LINKEDIN_JOB_TIMEOUT_SECONDS,
+            job_timeout=settings.LINKEDIN_JOB_TIMEOUT_SECONDS,
         )
         logger.info("Enqueued search %s with timeout %ds", search_id, settings.LINKEDIN_JOB_TIMEOUT_SECONDS)
     except Exception as e:
@@ -380,6 +384,8 @@ async def resume_search(
     )
     session.add(new_search)
     await session.flush()
+    # Commit before enqueueing -- see create_search() for why.
+    await session.commit()
 
     # Enqueue
     try:
@@ -390,7 +396,7 @@ async def resume_search(
         q.enqueue(
             "backend.worker.linkedin_worker.run_linkedin_search",
             str(new_search.id),
-            timeout=settings.LINKEDIN_JOB_TIMEOUT_SECONDS,
+            job_timeout=settings.LINKEDIN_JOB_TIMEOUT_SECONDS,
         )
     except Exception as e:
         logger.error("Failed to enqueue resume: %s", e)
