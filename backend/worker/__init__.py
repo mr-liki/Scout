@@ -1,0 +1,1 @@
+# SCOUTJOBS Worker package

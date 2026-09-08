@@ -4,16 +4,17 @@ server.py - Run the ENTIRE SCOUT Jobs site locally with one command.
 
     python server.py            # http://localhost:8000
 
-Serves the static frontend AND the JSON API (/api/search, /api/health) from
-one process, using only the Python standard library. This is the same code
-the Vercel / Netlify serverless functions use, so what works here works in
-production.
+Serves the static frontend AND the JSON API (/api/search, /api/health,
+/api/jobs/linkedin, /api/jobs/linkedin/{job_id}) from one process, using
+only the Python standard library.
 """
 
 import json
 import mimetypes
 import os
+import re
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -42,15 +43,14 @@ def _read_index():
 
 
 def _send_cors(handler):
-    """Emit CORS headers on the RESPONSE (must use send_header, not mutate
-    the request's header object)."""
+    """Emit CORS headers on the RESPONSE."""
     handler.send_header("Access-Control-Allow-Origin", "*")
     handler.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
     handler.send_header("Access-Control-Allow-Headers", "Content-Type")
 
 
 class Handler(BaseHTTPRequestHandler):
-    def log_message(self, *args):  # quieter logs
+    def log_message(self, *args):
         pass
 
     def do_OPTIONS(self):
@@ -70,6 +70,17 @@ class Handler(BaseHTTPRequestHandler):
             self._json_response(200, health())
             return
 
+        # LinkedIn search endpoint: /api/jobs/linkedin
+        if path == "/api/jobs/linkedin":
+            self._api_linkedin_search(parsed.query)
+            return
+
+        # LinkedIn detail endpoint: /api/jobs/linkedin/{job_id}
+        m = re.match(r"^/api/jobs/linkedin/(\d+)$", path)
+        if m:
+            self._api_linkedin_detail(m.group(1))
+            return
+
         self._static(path)
 
     # --- API routes -------------------------------------------------------
@@ -82,6 +93,62 @@ class Handler(BaseHTTPRequestHandler):
             return
         result = search(keywords, location, budget_seconds=SEARCH_BUDGET)
         self._json_response(200, result)
+
+    def _api_linkedin_search(self, query_string):
+        """LinkedIn-specific search with freshness/under_10/easy_apply."""
+        from trackers.linkedin_connector_tracker import search_linkedin
+
+        params = parse_qs(query_string)
+        keywords = (params.get("q") or params.get("keywords") or [""])[0].strip()
+        location = (params.get("location") or params.get("l") or [""])[0].strip()
+        posted_within = (params.get("posted_within") or params.get("freshness") or [None])[0]
+        under_10 = (params.get("under_10") or ["false"])[0].lower() in ("true", "1", "yes")
+        easy_apply = (params.get("easy_apply") or ["false"])[0].lower() in ("true", "1", "yes")
+        sort_mode = (params.get("sort") or ["newest"])[0]
+        limit = int((params.get("limit") or ["50"])[0])
+        max_pages = int((params.get("max_pages") or ["20"])[0])
+        start = int((params.get("start") or ["0"])[0])
+
+        result = search_linkedin(
+            keywords=keywords,
+            location=location,
+            posted_within=posted_within,
+            under_10=under_10,
+            easy_apply=easy_apply,
+            sort_mode=sort_mode,
+            max_jobs=limit,
+            max_pages=max_pages,
+            start=start,
+        )
+
+        # Map status to HTTP code
+        status = result.get("search_status", "failed")
+        if status == "failed":
+            http_status = 502
+        elif status == "partial":
+            http_status = 200  # Partial results are still valid
+        else:
+            http_status = 200
+
+        self._json_response(http_status, result)
+
+    def _api_linkedin_detail(self, job_id):
+        """Lazy detail fetch for a single LinkedIn job."""
+        from trackers.linkedin_connector_tracker import fetch_detail
+
+        result = fetch_detail(job_id)
+        upstream = result.get("upstream_status", "error")
+
+        if upstream == "success":
+            http_status = 200
+        elif upstream == "invalid_id":
+            http_status = 400
+        elif upstream == "rate_limited":
+            http_status = 429
+        else:
+            http_status = 502
+
+        self._json_response(http_status, result)
 
     def _json_response(self, status, payload):
         body = json.dumps(payload).encode("utf-8")
@@ -97,7 +164,6 @@ class Handler(BaseHTTPRequestHandler):
     def _static(self, path):
         if path == "/" or path == "":
             path = "/index.html"
-        # Map the SPA fallback: unknown routes serve index.html
         full = os.path.normpath(os.path.join(ROOT, path.lstrip("/")))
         if full != ROOT and not full.startswith(ROOT + os.sep):
             self.send_error(403)
@@ -114,7 +180,6 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         else:
-            # SPA fallback
             body = _read_index()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -126,8 +191,9 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     print("=" * 60)
     print("  SCOUT JOBS - All-in-one job search")
-    print(f"  → http://localhost:{PORT}")
-    print("  → API: http://localhost:{0}/api/search?q=Python Developer".format(PORT))
+    print(f"  -> http://localhost:{PORT}")
+    print(f"  -> API: http://localhost:{PORT}/api/search?q=Python Developer")
+    print(f"  -> LinkedIn: http://localhost:{PORT}/api/jobs/linkedin?q=Software+Engineer")
     print("=" * 60)
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     try:

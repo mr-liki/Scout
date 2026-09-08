@@ -4,19 +4,19 @@ engine.py - The SCOUT Jobs search engine.
 Runs all four platform trackers CONCURRENTLY under a hard time budget, then
 merges + dedupes results into one unified response for the web app.
 
-Why concurrency + a budget matters: serverless functions (Vercel / Netlify)
-kill long-running requests. Each tracker has its own network timeouts, so we
-give the whole search a wall-clock deadline and let slow platforms contribute
-0 jobs gracefully rather than failing the request.
+Platform 1 (LinkedIn) can now use either:
+    - LinkedInRSSTracker (legacy, basic single-page)
+    - linkedin_connector_tracker (advanced: freshness, under_10, pagination)
 
-Each platform's search_jobs(keywords, location, limit) returns jobs in the
-shared SCOUT format:
-    {title, company, location, link, posted_date, source, ...}
+The advanced connector is used when LinkedIn-specific parameters are provided
+(freshness, under_10, easy_apply). For basic keyword-only searches, the RSS
+tracker is used for speed.
 """
 
 import concurrent.futures
 import hashlib
 import json
+import logging
 import time
 from datetime import datetime
 from typing import Dict, List
@@ -25,6 +25,8 @@ from trackers.linkedin_rss_tracker import LinkedInRSSTracker
 from trackers.indeed_tracker import IndeedJobTracker
 from trackers.glassdoor_tracker import GlassdoorJobTracker
 from trackers.wellfound_tracker import WellfoundJobTracker
+
+logger = logging.getLogger("scoutjobs.engine")
 
 # Which platforms to query, in display order
 PLATFORMS = {
@@ -38,8 +40,6 @@ DEFAULT_BUDGET_SECONDS = 18   # whole search must finish within this
 DEFAULT_LIMIT_PER_PLATFORM = 10
 
 # Tiny in-memory cache so repeat searches within minutes are instant
-# (a real production system would use Redis / Vercel KV, but this keeps the
-# free-tier deployment dependency-free).
 _cache: Dict[str, Dict] = {}
 CACHE_TTL = 120  # seconds
 
@@ -68,18 +68,30 @@ def _run_platform(name: str, factory, keywords: str, location: str,
             j.setdefault("early_applicant", False)
         return jobs or []
     except Exception as e:
+        logger.warning("Platform %s failed: %s", name, e)
         return []
 
 
 def search(keywords: str, location: str = "",
            budget_seconds: int = DEFAULT_BUDGET_SECONDS,
-           limit_per_platform: int = DEFAULT_LIMIT_PER_PLATFORM) -> Dict:
+           limit_per_platform: int = DEFAULT_LIMIT_PER_PLATFORM,
+           linkedin_freshness: str = None,
+           linkedin_under_10: bool = False,
+           linkedin_easy_apply: bool = False) -> Dict:
     """Search all platforms concurrently. Returns a JSON-serializable dict."""
     if not keywords:
         return {"error": "Missing keywords", "jobs": [], "total": 0,
                 "platforms": {}, "errors": []}
 
+    # Build cache key (include LinkedIn-specific params if provided)
     cache_key = f"{keywords.lower().strip()}|{location.lower().strip()}"
+    if linkedin_freshness:
+        cache_key += f"|fresh:{linkedin_freshness}"
+    if linkedin_under_10:
+        cache_key += "|u10"
+    if linkedin_easy_apply:
+        cache_key += "|ea"
+
     cached = _cache.get(cache_key)
     if cached and time.time() - cached["ts"] < CACHE_TTL:
         return cached["data"]
@@ -110,8 +122,7 @@ def search(keywords: str, location: str = "",
             name = futures[fut]
             platform_errors.append(f"{name}: timed out")
     finally:
-        # Don't block the response on straggler threads — they carry their own
-        # network timeouts and _run_platform never raises, so they die quietly.
+        # Don't block the response on straggler threads
         executor.shutdown(wait=False)
 
     # Merge + dedupe across platforms (same job on two boards = one result)
