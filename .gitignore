@@ -25,6 +25,10 @@ backend/web/.wellfound_cache.json
 # Docker
 infra/.env.production
 
+# Cloudflare Wrangler local dev (may contain BACKEND_API_URL)
+.dev.vars
+.wrangler/
+
 # Database backups
 /data/backups/
 
