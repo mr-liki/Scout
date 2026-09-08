@@ -1,9 +1,10 @@
 /**
  * ui.js — Templates + rendering + routing for SCOUT Jobs.
+ * Updated for production async search polling.
  */
 
 import * as store from "./store.js";
-import { searchJobs as apiSearchJobs, probeApi as apiProbe } from "./api.js";
+import { searchJobs as apiSearchJobs, createLinkedInSearch, resumeSearch, fetchLinkedInDetail } from "./api.js";
 
 const PLATFORMS = ["LinkedIn", "Indeed", "Glassdoor", "Wellfound"];
 const PLAT_CLASS = { LinkedIn: "li", Indeed: "in", Glassdoor: "gd", Wellfound: "wf" };
@@ -105,7 +106,7 @@ export function toast(msg, kind = "ok") {
    Router
    ============================================================ */
 
-let state = null; // injected by main.js
+let state = null;
 
 export function setState(s) {
   state = s;
@@ -128,7 +129,6 @@ export function router() {
     default:
       renderHome();
   }
-  // nav highlight
   document.querySelectorAll(".nav-link").forEach((a) => {
     a.classList.toggle("active", a.dataset.route === (path || "/"));
   });
@@ -223,10 +223,11 @@ function renderHome() {
 }
 
 /* ============================================================
-   Results
+   Results (with async polling support)
    ============================================================ */
 let currentJobs = [];
-let currentState = null; // {q, location, result, demo}
+let currentState = null;
+let pollInterval = null;
 
 async function renderResults(q, location) {
   const app = document.getElementById("app");
@@ -234,7 +235,7 @@ async function renderResults(q, location) {
   <div class="results-wrap">
     <div class="results-topbar">
       <h1 class="results-title">Jobs for <span class="q">${esc(q || "…")}</span></h1>
-      <span class="results-meta" id="resMeta">Searching all platforms…</span>
+      <span class="results-meta" id="resMeta">Searching…</span>
     </div>
     <div class="results-layout">
       <aside class="filters" id="filters">
@@ -243,6 +244,23 @@ async function renderResults(q, location) {
           <label class="filter-opt"><input type="checkbox" id="fEarly" /> 🔥 Early applicants only</label>
           <label class="filter-opt"><input type="checkbox" id="fRemote" /> 🌍 Remote only</label>
         </div>
+
+        <h4>LinkedIn Options</h4>
+        <div class="filter-group">
+          <label class="filter-label">Posted within</label>
+          <select class="sort-select" id="fFreshness" style="width:100%">
+            <option value="">Any time</option>
+            <option value="5m">Last 5 minutes</option>
+            <option value="10m">Last 10 minutes</option>
+            <option value="30m">Last 30 minutes</option>
+            <option value="1h">Last 1 hour</option>
+            <option value="24h">Last 24 hours</option>
+            <option value="7d">Last 7 days</option>
+          </select>
+          <label class="filter-opt"><input type="checkbox" id="fUnder10" /> 🔥 Under 10 applicants</label>
+          <label class="filter-opt"><input type="checkbox" id="fEasyApply" /> ⚡ Easy Apply</label>
+        </div>
+
         <h4>Sources</h4>
         <div class="filter-group" id="srcFilters">
           ${PLATFORMS.map((p) => `<label class="filter-opt"><input type="checkbox" data-src="${p}" checked /> ${p}</label>`).join("")}
@@ -266,25 +284,128 @@ async function renderResults(q, location) {
         <div class="load-more-wrap" id="loadMoreWrap" hidden>
           <button class="btn btn-ghost" id="loadMoreBtn">Load more jobs</button>
         </div>
+        <div id="linkedinStatus" class="linkedin-status" hidden></div>
+        <div id="resumeWrap" class="resume-wrap" hidden>
+          <button class="btn btn-primary" id="resumeBtn">Resume search</button>
+        </div>
       </div>
     </div>
   </div>`;
 
   wireFilters();
-  currentState = { q, location };
+  currentState = { q, location, searchId: null };
   currentJobs = [];
 
+  // Clean up any previous poll interval
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+
+  const freshness = document.getElementById("fFreshness").value;
+  const under10 = document.getElementById("fUnder10").checked;
+  const easyApply = document.getElementById("fEasyApply").checked;
+  const useProductionApi = freshness || under10 || easyApply;
+
+  if (useProductionApi) {
+    // Use production async search
+    await startAsyncSearch(q, location, {
+      posted_within: freshness || undefined,
+      under_10: under10,
+      easy_apply: easyApply,
+      sort: "newest",
+      limit: 100,
+    });
+  } else {
+    // Use legacy multi-platform search
+    try {
+      const { result, demo } = await apiSearchJobs(q, location);
+      document.getElementById("demoBanner").hidden = !demo;
+      currentState.demo = demo;
+      currentState.result = result;
+      currentJobs = result.jobs || [];
+      renderJobList();
+    } catch {
+      document.getElementById("resMeta").textContent = "Something went wrong — try again.";
+      document.getElementById("jobList").innerHTML = `
+        <div class="state-box"><div class="state-ico">😵</div><h3>Search failed</h3><p>We couldn't reach the job sources. Check your connection and try again.</p></div>`;
+    }
+  }
+}
+
+async function startAsyncSearch(q, location, options) {
+  const statusEl = document.getElementById("linkedinStatus");
+  const resumeWrap = document.getElementById("resumeWrap");
+
   try {
-    const { result, demo } = await apiSearchJobs(q, location);
-    document.getElementById("demoBanner").hidden = !demo;
-    currentState.demo = demo;
-    currentState.result = result;
-    currentJobs = result.jobs || [];
-    renderJobList();
-  } catch {
-    document.getElementById("resMeta").textContent = "Something went wrong — try again.";
-    document.getElementById("jobList").innerHTML = `
-      <div class="state-box"><div class="state-ico">😵</div><h3>Search failed</h3><p>We couldn't reach the job sources. Check your connection and try again.</p></div>`;
+    const { search_id, poll_fn, initial_status, demo } = await createLinkedInSearch({
+      keywords: q,
+      location: location,
+      ...options,
+    });
+
+    if (demo) {
+      // Fall back to demo
+      document.getElementById("demoBanner").hidden = false;
+      const { result } = await apiSearchJobs(q, location);
+      currentJobs = result.jobs || [];
+      currentState.result = result;
+      renderJobList();
+      return;
+    }
+
+    if (!search_id) {
+      statusEl.hidden = false;
+      statusEl.innerHTML = '<div class="status-failed">❌ Failed to start search</div>';
+      return;
+    }
+
+    currentState.searchId = search_id;
+    document.getElementById("resMeta").textContent = "Searching LinkedIn…";
+
+    // Start polling
+    pollInterval = setInterval(async () => {
+      const data = await poll_fn();
+      if (!data) return;
+
+      // Update jobs progressively
+      if (data.jobs && data.jobs.length > currentJobs.length) {
+        currentJobs = data.jobs;
+        renderJobList();
+      }
+
+      // Update status
+      if (data.status === "success" || data.status === "partial" || data.status === "failed") {
+        clearInterval(pollInterval);
+        pollInterval = null;
+
+        currentState.result = {
+          jobs: data.jobs,
+          total: data.total_jobs,
+          search_status: data.status,
+        };
+
+        document.getElementById("resMeta").textContent = `${data.total_jobs} jobs found · ${data.status}`;
+
+        if (data.status === "partial") {
+          statusEl.hidden = false;
+          statusEl.innerHTML = '<div class="status-partial">⚠️ Partial results — some jobs may be missing due to rate limiting.</div>';
+        }
+
+        if (data.resume?.available) {
+          resumeWrap.hidden = false;
+          document.getElementById("resumeBtn").onclick = async () => {
+            resumeWrap.hidden = true;
+            statusEl.innerHTML = '<div class="status-partial">🔄 Resuming search…</div>';
+            statusEl.hidden = false;
+            await startAsyncSearch(q, location, { ...options, start: data.resume.start });
+          };
+        }
+      }
+    }, 1000);
+  } catch (e) {
+    statusEl.hidden = false;
+    statusEl.innerHTML = `<div class="status-failed">❌ Search error: ${esc(e.message)}</div>`;
   }
 }
 
@@ -294,6 +415,18 @@ function wireFilters() {
   ["fEarly", "fRemote"].forEach((id) => {
     document.getElementById(id).addEventListener("change", onFilter);
   });
+
+  const linkedinFilterIds = ["fFreshness", "fUnder10", "fEasyApply"];
+  linkedinFilterIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", () => {
+        const { q, location } = currentState || {};
+        if (q) renderResults(q, location || "");
+      });
+    }
+  });
+
   document.querySelectorAll("#srcFilters input").forEach((el) => {
     el.addEventListener("change", () => {
       const chip = document.querySelector(`.src-chip[data-chip="${el.dataset.src}"]`);
@@ -352,7 +485,8 @@ function renderJobList() {
     return;
   }
 
-  meta.textContent = `${res.total} job${res.total !== 1 ? "s" : ""} found · ${platCounts}`;
+  const total = res.total || res.total_jobs || jobs.length;
+  meta.textContent = `${total} job${total !== 1 ? "s" : ""} found · ${platCounts || res.search_status || ""}`;
   list.innerHTML = shown.map((j) => jobCard(j)).join("");
   document.getElementById("loadMoreWrap").hidden = jobs.length <= shown.length;
 
@@ -375,15 +509,24 @@ function renderJobList() {
 }
 
 /* ============================================================
-   Job detail modal
+   Job detail modal (with lazy LinkedIn detail loading)
    ============================================================ */
-function openModal(job) {
+async function openModal(job) {
   const saved = store.isSaved(job.id);
   const badges = [];
   if (job.early_applicant) badges.push('<span class="job-tag tag-early">🔥 Early applicant</span>');
   if (job.easy_apply) badges.push('<span class="job-tag tag-easy">⚡ Easy apply</span>');
   if (job.remote) badges.push('<span class="job-tag tag-remote">🌍 Remote</span>');
   const link = job.link || job.url || "#";
+  const isLinkedIn = job.source === "LinkedIn";
+
+  let linkedinJobId = null;
+  if (isLinkedIn) {
+    const providerId = job.provider_metadata?.provider_job_id;
+    if (providerId && /^\d+$/.test(providerId)) {
+      linkedinJobId = providerId;
+    }
+  }
 
   const root = document.getElementById("modalRoot");
   root.innerHTML = `
@@ -402,7 +545,14 @@ function openModal(job) {
           ${job.posted_date ? `<span>📅 <b>${esc(timeAgo(job.posted_date))}</b></span>` : ""}
         </div>
         ${badges.length ? `<div class="modal-badges">${badges.join("")}</div>` : ""}
-        ${job.description ? `<div class="modal-desc">${esc(job.description)}</div>` : `<p class="modal-desc">Full description is available on ${esc(job.source)} — click the button below to open the original listing and apply.</p>`}
+        <div id="modalDesc">
+          ${job.description
+            ? `<div class="modal-desc">${esc(job.description)}</div>`
+            : isLinkedIn && linkedinJobId
+              ? `<div class="modal-desc modal-loading">Loading job details…</div>`
+              : `<p class="modal-desc">Full description is available on ${esc(job.source)} — click the button below to open the original listing and apply.</p>`
+          }
+        </div>
         <div class="modal-foot">
           <a class="btn btn-primary" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Apply on ${esc(job.source)} ↗</a>
           <button class="btn btn-ghost" id="modalSave">${saved ? "✓ Saved" : "☆ Save job"}</button>
@@ -411,6 +561,24 @@ function openModal(job) {
       </div>
     </div>
   </div>`;
+
+  if (linkedinJobId && !job.description) {
+    fetchLinkedInDetail(linkedinJobId).then((detail) => {
+      const descEl = document.getElementById("modalDesc");
+      if (!descEl) return;
+      if (detail && detail.description) {
+        descEl.innerHTML = `<div class="modal-desc">${esc(detail.description)}</div>`;
+        job.description = detail.description;
+      } else {
+        descEl.innerHTML = `<p class="modal-desc">Full description is available on ${esc(job.source)} — click the button below to open the original listing and apply.</p>`;
+      }
+    }).catch(() => {
+      const descEl = document.getElementById("modalDesc");
+      if (descEl) {
+        descEl.innerHTML = `<p class="modal-desc">Full description is available on ${esc(job.source)} — click the button below to open the original listing and apply.</p>`;
+      }
+    });
+  }
 
   const close = () => (root.innerHTML = "");
   document.getElementById("modalClose").addEventListener("click", close);
@@ -486,6 +654,9 @@ function renderAbout() {
       <h2>🔍 What it searches</h2>
       <p>Each query is sent to <b>LinkedIn, Indeed, Glassdoor and Wellfound</b> in parallel using free public sources — no API keys, no logins, no scraping fees. Results are merged, de-duplicated, and tagged with their source so you know where to apply.</p>
 
+      <h2>LinkedIn Advanced Search</h2>
+      <p>LinkedIn searches support additional filters: <b>Freshness</b> (posted within 5m/10m/30m/1h/24h/7d), <b>Under 10 applicants</b> (low competition), and <b>Easy Apply</b>. These use LinkedIn's public guest API with adaptive rate limiting.</p>
+
       <h2>🧠 The story</h2>
       <p>SCOUT started as a hacker-style terminal chatbot for job hunting. This web app is the productized version: the same search engines that powered the terminal, wrapped in a modern interface you can host for free and share with anyone.</p>
 
@@ -504,6 +675,7 @@ function renderAbout() {
         <li>Some sources (like Naukri) sit behind aggressive bot protection and aren't included.</li>
         <li>Indeed is scoped to the US index; Glassdoor is country-aware (India routes to glassdoor.co.in).</li>
         <li>Posting timestamps and salaries appear only where the source exposes them.</li>
+        <li>LinkedIn uses approximate relative posting age ("5 minutes ago"), not exact timestamps.</li>
       </ul>
     </div>`;
 }
