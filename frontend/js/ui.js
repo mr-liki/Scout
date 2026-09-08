@@ -305,32 +305,19 @@ async function renderResults(q, location) {
   const freshness = document.getElementById("fFreshness").value;
   const under10 = document.getElementById("fUnder10").checked;
   const easyApply = document.getElementById("fEasyApply").checked;
-  const useProductionApi = freshness || under10 || easyApply;
 
-  if (useProductionApi) {
-    // Use production async search
-    await startAsyncSearch(q, location, {
-      posted_within: freshness || undefined,
-      under_10: under10,
-      easy_apply: easyApply,
-      sort: "newest",
-      limit: 100,
-    });
-  } else {
-    // Use legacy multi-platform search
-    try {
-      const { result, demo } = await apiSearchJobs(q, location);
-      document.getElementById("demoBanner").hidden = !demo;
-      currentState.demo = demo;
-      currentState.result = result;
-      currentJobs = result.jobs || [];
-      renderJobList();
-    } catch {
-      document.getElementById("resMeta").textContent = "Something went wrong — try again.";
-      document.getElementById("jobList").innerHTML = `
-        <div class="state-box"><div class="state-ico">😵</div><h3>Search failed</h3><p>We couldn't reach the job sources. Check your connection and try again.</p></div>`;
-    }
-  }
+  // Always use the production async search (POST /api/v1/searches) -- it
+  // already probes the API and falls back to demo mode on its own when the
+  // backend isn't reachable. The legacy GET /api/search path this used to
+  // gate on for a plain search has no route in the production FastAPI app,
+  // so it always 404ed and silently landed on fake demo data.
+  await startAsyncSearch(q, location, {
+    posted_within: freshness || undefined,
+    under_10: under10,
+    easy_apply: easyApply,
+    sort: "newest",
+    limit: 100,
+  });
 }
 
 async function startAsyncSearch(q, location, options) {
@@ -684,11 +671,11 @@ function renderAbout() {
    Helpers
    ============================================================ */
 
-export function goSearch(q, location) {
+export function goSearch(q, loc) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
-  if (location) params.set("location", location);
-  location.hash = `#/search?${params}`;
+  if (loc) params.set("location", loc);
+  window.location.hash = `#/search?${params}`;
   window.scrollTo({ top: 0 });
 }
 
