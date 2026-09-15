@@ -48,11 +48,21 @@ def resolve_location(session, location):
     """Glassdoor's own sc.location/locKeyword text param is cosmetic — the
     server resolves the *effective* search location from the requester's
     GeoIP and silently ignores free text unless a real locId (from this
-    autocomplete endpoint) is supplied too. See ../GLASSDOOR_SETUP.md."""
+    autocomplete endpoint) is supplied too. See ../GLASSDOOR_SETUP.md.
+
+    The frontend sends full "City, State, Country" strings (e.g.
+    "Bengaluru, Karnataka, India"), but Glassdoor's autocomplete matches
+    poorly against that whole string and often returns nothing — which
+    made this silently fall through to GeoIP-based defaults (the proxy's
+    own IP location) instead of erroring. Using just the city name (before
+    the first comma) matches Glassdoor's autocomplete far more reliably."""
+    term = location.split(",")[0].strip() if location else location
+    if not term:
+        return None
     try:
         resp = session.get(
             AUTOCOMPLETE_URL,
-            params={"locationTypeFilters": "CITY,STATE,COUNTRY", "caller": "jobs", "term": location},
+            params={"locationTypeFilters": "CITY,STATE,COUNTRY", "caller": "jobs", "term": term},
             timeout=10,
         )
         if resp.status_code != 200:
