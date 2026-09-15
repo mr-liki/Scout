@@ -13,8 +13,15 @@ linkedin_*.json.partial.json
 linkedin_*.html
 
 # Local development
+.glassdoor_cache.json
+backend/cli/.glassdoor_cache.json
 backend/web/.glassdoor_cache.json
+backend/web/trackers/.glassdoor_cache.json
+.wellfound_cache.json
+backend/cli/.wellfound_cache.json
 backend/web/.wellfound_cache.json
+backend/web/trackers/.wellfound_cache.json
+.cutshort_slug_cache.json
 
 # Environment files (NEVER commit secrets)
 .env
@@ -41,3 +48,13 @@ infra/.env.production
 # OS
 .DS_Store
 Thumbs.db
+
+# Naukri connector: cached per-session nkparam token
+.naukri_token.json
+
+# Node dependency caches (never commit — can be huge)
+node_modules/
+npm-cache/
+package-lock.json
+__pycache__/
+*.pyc

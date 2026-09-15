@@ -1,0 +1,45 @@
+name = "scoutjobs-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "scoutjobs"
+database_id = "03c52cba-69a8-420f-96d1-11c8124099d9"
+
+# KV Namespace for caching + rate limiting
+[[kv_namespaces]]
+binding = "KV"
+id = "f858fb76e7bd41d59467dc443d37e150"
+
+# Environment variables
+[vars]
+ALLOWED_ORIGINS = "https://scout.apexora.workers.dev,http://localhost:8787"
+
+[ai]
+binding = "AI"
+
+# Browser Rendering: real headless Chrome, used as a LinkedIn fallback.
+# Unlike plain fetch(), it runs on a different Cloudflare egress IP pool,
+# which matters because LinkedIn's block here is IP-volume rate-limiting
+# (429s), not a TLS-fingerprint check. See trackers/linkedin-rss.ts.
+[browser]
+binding = "BROWSER"
+
+# Optional secrets (not set here — secrets don't belong in wrangler.toml).
+#
+# Set with: npx wrangler secret put RAPID_API_KEY
+# A RapidAPI key for the "linkedin-data-api" service. When present, LinkedIn
+# searches route through RapidAPI's infrastructure instead of scraping
+# LinkedIn directly from this Worker, which sidesteps LinkedIn's IP-based
+# rate-limiting of Cloudflare Workers' shared egress pool. Falls back to the
+# free scraping path automatically when unset.
+#
+# Set with: npx wrangler secret put SCRAPERAPI_KEY
+# A ScraperAPI key (scraperapi.com). When present, Foundit searches route
+# through it instead of hitting Foundit directly from this Worker, which
+# sidesteps an Akamai IP-reputation block on Cloudflare's network (see
+# trackers/foundit.ts). Falls back to the direct request automatically when
+# unset.
