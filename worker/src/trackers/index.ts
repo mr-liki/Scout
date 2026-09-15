@@ -46,7 +46,8 @@ const TRACKERS: Array<{
 export async function searchAllTrackers(
   keywords: string,
   location: string,
-  env: Env
+  env: Env,
+  allowPlatforms?: string[]
 ): Promise<{ jobs: TrackerJob[]; platforms: Record<string, number>; errors: string[] }> {
   // Every tracker's own fetch() is now individually bounded (see
   // lib/fetch-timeout.ts), so this outer ceiling only needs to cover
@@ -61,8 +62,12 @@ export async function searchAllTrackers(
   const sharedBrowser = createSharedBrowser(env);
   const envWithSharedBrowser: Env = { ...env, getSharedBrowser: sharedBrowser.get };
 
+  const activeTrackers = allowPlatforms
+    ? TRACKERS.filter((t) => allowPlatforms.includes(t.name))
+    : TRACKERS;
+
   const results = await Promise.allSettled(
-    TRACKERS.map(async (t) => {
+    activeTrackers.map(async (t) => {
       try {
         const jobs = await Promise.race([
           t.fn(keywords, location, envWithSharedBrowser),

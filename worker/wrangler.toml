@@ -28,11 +28,14 @@ binding = "AI"
 [browser]
 binding = "BROWSER"
 
-# Every 10 minutes — safely under Render's ~15-minute free-tier idle
-# threshold, so the glassdoor-proxy/ service (see index.ts's scheduled()
-# handler) never spins down. Free on Cloudflare's plan.
+# Two schedules sharing one Worker's scheduled() handler (branches on
+# event.cron — see index.ts):
+#  - */10: Glassdoor proxy keep-alive, safely under Render's ~15-minute
+#    free-tier idle threshold, so glassdoor-proxy/ never spins down.
+#  - */5: notify-scan.ts's job-alert scan — matches fresh, early-applicant
+#    postings against subscribers' saved keywords/locations and emails them.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/10 * * * *", "*/5 * * * *"]
 
 # Optional secrets (not set here — secrets don't belong in wrangler.toml).
 #

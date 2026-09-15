@@ -1,5 +1,6 @@
 import type { Env } from "./types";
 import { handleOptions, corsHeaders } from "./lib/cors";
+import { runNotifyScan } from "./lib/notify-scan";
 import { handleSearch } from "./routes/search";
 import { handleHealth } from "./routes/health";
 import { handlePlatforms } from "./routes/platforms";
@@ -22,15 +23,27 @@ export default {
   // looks like another Glassdoor failure. This doesn't touch the separate
   // shared-IP-reputation issue (see trackers/glassdoor.ts) — it only fixes
   // cold starts.
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    const urls = [env.GLASSDOOR_PROXY_URL, env.GLASSDOOR_PROXY_URL_2, env.GLASSDOOR_PROXY_URL_3].filter(
-      (u): u is string => Boolean(u)
-    );
-    for (const url of urls) {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (event.cron === "*/10 * * * *") {
+      const urls = [env.GLASSDOOR_PROXY_URL, env.GLASSDOOR_PROXY_URL_2, env.GLASSDOOR_PROXY_URL_3].filter(
+        (u): u is string => Boolean(u)
+      );
+      for (const url of urls) {
+        ctx.waitUntil(
+          fetch(`${url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10000) })
+            .then((r) => console.log(`[keepalive] ${url} health: ${r.status}`))
+            .catch((e) => console.warn(`[keepalive] ${url} ping failed: ${e.message}`))
+        );
+      }
+    }
+
+    // Scans a rotating slice of subscribers' keyword/location combos for
+    // fresh, early-applicant postings and emails matches — see
+    // lib/notify-scan.ts for why it's scoped to a handful of platforms and
+    // combos per run rather than everything at once.
+    if (event.cron === "*/5 * * * *") {
       ctx.waitUntil(
-        fetch(`${url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10000) })
-          .then((r) => console.log(`[keepalive] ${url} health: ${r.status}`))
-          .catch((e) => console.warn(`[keepalive] ${url} ping failed: ${e.message}`))
+        runNotifyScan(env).catch((e) => console.error(`[Notify] Scan failed: ${e.message}`))
       );
     }
   },
