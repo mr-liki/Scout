@@ -126,7 +126,22 @@ function buildGlassdoorUrl(keywords: string, location: string): string {
 // — which needs a real Python process with a compiled dependency, so it
 // runs as glassdoor-proxy/ on Render.com instead (neither Cloudflare
 // Workers nor Deno Deploy can execute compiled/native code).
-async function searchGlassdoorViaOwnProxy(
+//
+// Glassdoor can still rate-limit even a "good" TLS fingerprint if the same
+// IP sends enough requests in a short window (observed directly: repeated
+// testing during development got the Render proxy's IP temporarily
+// 403'd again, clearing on its own ~15 min later). A dedicated, longer-
+// lived cache here — independent of the whole-response 60s cache in
+// routes/search.ts — means repeat searches for the same query don't keep
+// re-hitting Glassdoor at all, which is both faster and reduces the volume
+// that could retrigger the same rate limit.
+const PROXY_CACHE_TTL_SECONDS = 900; // 15 minutes
+
+function proxyCacheKey(keywords: string, location: string): string {
+  return `glassdoor:proxy:${keywords.toLowerCase()}:${location.toLowerCase()}`.slice(0, 200);
+}
+
+async function fetchViaProxy(
   keywords: string,
   location: string,
   proxyUrl: string,
@@ -136,16 +151,75 @@ async function searchGlassdoorViaOwnProxy(
   if (location) params.set("location", location);
 
   // Render's free tier spins down after ~15 min idle and can take 30-60s to
-  // wake — this won't wait that long (would blow the tracker's own ~19s
-  // ceiling anyway), so a cold start here just falls through to the direct
-  // request below, same as any other failure.
+  // wake — a keep-alive cron (index.ts's scheduled handler) pings all
+  // configured instances to prevent that, but this timeout still exists as
+  // a safety net so a cold start (or a dead instance) doesn't blow the
+  // whole tracker budget — it just moves on to the next proxy in the list.
   const resp = await fetchWithTimeout(`${proxyUrl.replace(/\/$/, "")}/glassdoor?${params}`, {
     headers: { "x-proxy-key": proxyKey },
-  }, 15000);
+  }, 12000);
   if (!resp.ok) throw new Error(`Glassdoor own-proxy HTTP ${resp.status}`);
 
   const html = await resp.text();
   return parseGlassdoorHtml(html);
+}
+
+// Glassdoor's rate-limiting is tied to a specific shared IP pool (Render's
+// free-tier outbound IPs are shared across many tenants), and different
+// Render regions draw from different pools. Rather than depend on one
+// region being in good standing, this tries every configured proxy
+// instance (deploy the same glassdoor-proxy/ code to 2-3 regions) until
+// one succeeds — real infrastructure redundancy against a shared-IP
+// problem, not a workaround for the TLS check itself (curl_cffi already
+// handles that part, see GLASSDOOR_SETUP.md).
+function configuredProxies(env: Env): { url: string; key: string }[] {
+  const key = env.GLASSDOOR_PROXY_KEY;
+  if (!key) return [];
+  const urls = [env.GLASSDOOR_PROXY_URL, env.GLASSDOOR_PROXY_URL_2, env.GLASSDOOR_PROXY_URL_3].filter(
+    (u): u is string => Boolean(u)
+  );
+  return urls.map((url) => ({ url, key }));
+}
+
+async function searchGlassdoorViaOwnProxies(
+  keywords: string,
+  location: string,
+  env: Env
+): Promise<TrackerJob[]> {
+  const proxies = configuredProxies(env);
+  if (!proxies.length) return [];
+
+  const cacheKey = proxyCacheKey(keywords, location);
+  const cached = await env.KV.get(cacheKey, "json");
+  if (cached && Array.isArray(cached)) {
+    console.log(`[Glassdoor] Proxy cache hit (${cached.length} jobs)`);
+    return cached as TrackerJob[];
+  }
+
+  // Shared deadline across all attempts — trying 3 proxies at up to 12s
+  // each could otherwise take 36s, well past this tracker's own ~19s
+  // ceiling in trackers/index.ts. 16s leaves a buffer under that.
+  const deadline = Date.now() + 16000;
+  let lastError: Error | null = null;
+  for (const { url, key } of proxies) {
+    if (Date.now() >= deadline) break;
+    try {
+      const jobs = await fetchViaProxy(keywords, location, url, key);
+      if (jobs.length > 0) {
+        try {
+          await env.KV.put(cacheKey, JSON.stringify(jobs), { expirationTtl: PROXY_CACHE_TTL_SECONDS });
+        } catch {}
+        return jobs;
+      }
+      console.warn(`[Glassdoor] Proxy ${url} returned 0 jobs, trying next`);
+    } catch (e: any) {
+      console.warn(`[Glassdoor] Proxy ${url} failed: ${e.message}, trying next`);
+      lastError = e;
+    }
+  }
+
+  if (lastError) throw lastError;
+  return [];
 }
 
 export async function searchGlassdoor(
@@ -153,14 +227,14 @@ export async function searchGlassdoor(
   location: string,
   env: Env
 ): Promise<TrackerJob[]> {
-  if (env.GLASSDOOR_PROXY_URL && env.GLASSDOOR_PROXY_KEY) {
-    try {
-      const jobs = await searchGlassdoorViaOwnProxy(keywords, location, env.GLASSDOOR_PROXY_URL, env.GLASSDOOR_PROXY_KEY);
-      console.log(`[Glassdoor] Own proxy returned ${jobs.length} jobs`);
-      if (jobs.length > 0) return jobs;
-    } catch (e: any) {
-      console.warn(`[Glassdoor] Own proxy failed: ${e.message}, falling back to direct fetch`);
+  try {
+    const jobs = await searchGlassdoorViaOwnProxies(keywords, location, env);
+    if (jobs.length > 0) {
+      console.log(`[Glassdoor] Own proxies returned ${jobs.length} jobs`);
+      return jobs;
     }
+  } catch (e: any) {
+    console.warn(`[Glassdoor] All own proxies failed: ${e.message}, falling back to direct fetch`);
   }
 
   const resp = await fetchWithTimeout(buildGlassdoorUrl(keywords, location), {

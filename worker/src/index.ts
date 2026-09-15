@@ -14,6 +14,27 @@ import {
 } from "./routes/resume";
 
 export default {
+  // Pings every configured Glassdoor proxy instance's /health endpoint on a
+  // schedule (see wrangler.toml's [triggers]) so none of them sees the ~15
+  // minutes of inactivity that triggers Render's free-tier spin-down.
+  // Without this, the first real search after any idle gap pays a 30-60s
+  // cold-start penalty that blows past this tracker's own timeout and just
+  // looks like another Glassdoor failure. This doesn't touch the separate
+  // shared-IP-reputation issue (see trackers/glassdoor.ts) — it only fixes
+  // cold starts.
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    const urls = [env.GLASSDOOR_PROXY_URL, env.GLASSDOOR_PROXY_URL_2, env.GLASSDOOR_PROXY_URL_3].filter(
+      (u): u is string => Boolean(u)
+    );
+    for (const url of urls) {
+      ctx.waitUntil(
+        fetch(`${url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10000) })
+          .then((r) => console.log(`[keepalive] ${url} health: ${r.status}`))
+          .catch((e) => console.warn(`[keepalive] ${url} ping failed: ${e.message}`))
+      );
+    }
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 

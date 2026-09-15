@@ -25,7 +25,12 @@ export interface Env {
   // on Render.com using curl_cffi's Chrome TLS impersonation — Glassdoor's
   // block is a TLS fingerprint check, not IP-based, so this needs a real
   // TLS stack, not just a different network origin). See trackers/glassdoor.ts.
+  // _2/_3 are the same code deployed to additional Render regions (same
+  // PROXY_KEY, different outbound IP pool) — tried in order as a fallback
+  // against one region's shared IP being temporarily rate-limited.
   GLASSDOOR_PROXY_URL?: string;
+  GLASSDOOR_PROXY_URL_2?: string;
+  GLASSDOOR_PROXY_URL_3?: string;
   GLASSDOOR_PROXY_KEY?: string;
   // Not a real Cloudflare binding — injected per-request by
   // searchAllTrackers (trackers/index.ts) so trackers that need Browser

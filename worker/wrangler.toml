@@ -28,6 +28,12 @@ binding = "AI"
 [browser]
 binding = "BROWSER"
 
+# Every 10 minutes — safely under Render's ~15-minute free-tier idle
+# threshold, so the glassdoor-proxy/ service (see index.ts's scheduled()
+# handler) never spins down. Free on Cloudflare's plan.
+[triggers]
+crons = ["*/10 * * * *"]
+
 # Optional secrets (not set here — secrets don't belong in wrangler.toml).
 #
 # Set with: npx wrangler secret put RAPID_API_KEY
